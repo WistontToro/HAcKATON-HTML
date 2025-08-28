@@ -34,18 +34,9 @@
           <fieldset class="field-group" aria-labelledby="role-legend">
             <legend id="role-legend">Selecciona tu rol <span class="required">*</span></legend>
             <div class="radio-group">
-              <label class="radio">
-                <input type="radio" name="role" value="estudiante" required>
-                <span>Estudiante</span>
-              </label>
-              <label class="radio">
-                <input type="radio" name="role" value="supervisor" required>
-                <span>Supervisor</span>
-              </label>
-              <label class="radio">
-                <input type="radio" name="role" value="evaluado" required>
-                <span>Evaluado</span>
-              </label>
+              <label class="radio"><input type="radio" name="role" value="estudiante" required><span>Estudiante</span></label>
+              <label class="radio"><input type="radio" name="role" value="supervisor" required><span>Supervisor</span></label>
+              <label class="radio"><input type="radio" name="role" value="evaluado" required><span>Evaluado</span></label>
             </div>
           </fieldset>
 
@@ -128,8 +119,14 @@
     </footer>
   </div>
 
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Pre-llenado del role desde query param (si vino ?role=estudiante por ejemplo)
+    const SUPABASE_URL = 'https://gpgxaeynjsvovdzyppoo.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_HuchtYI9DCe9M70OqefGIg_LM9UDoZm';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Pre-fill role if query param ?role=...
     (function prefillRoleFromQuery(){
       const params = new URLSearchParams(window.location.search);
       const role = params.get('role');
@@ -164,7 +161,7 @@
       });
     });
 
-    // Validaciones y envío (simulado)
+    // Validación + registro real con Supabase
     const form = document.getElementById('registerForm');
     const msg = document.getElementById('formMessage');
 
@@ -173,15 +170,15 @@
       msg.textContent = '';
       msg.className = 'form-message';
 
-      const formData = new FormData(form);
-      const role = formData.get('role');
-      const institucion = formData.get('institucion') === 'Otra' ? formData.get('institucion-otra') : formData.get('institucion');
-      const grado = formData.get('grado');
-      const nombre = formData.get('nombre');
-      const apellidos = formData.get('apellidos');
-      const email = formData.get('email');
-      const password = formData.get('password');
-      const passwordConfirm = formData.get('passwordConfirm');
+      const fd = new FormData(form);
+      const role = fd.get('role');
+      const institucion = fd.get('institucion') === 'Otra' ? fd.get('institucion-otra') : fd.get('institucion');
+      const grado = fd.get('grado');
+      const nombre = fd.get('nombre');
+      const apellidos = fd.get('apellidos');
+      const email = fd.get('email');
+      const password = fd.get('password');
+      const passwordConfirm = fd.get('passwordConfirm');
       const terms = document.getElementById('terms').checked;
 
       if (!role) return showError('Selecciona un rol.');
@@ -193,15 +190,23 @@
       if (password !== passwordConfirm) return showError('Las contraseñas no coinciden.');
       if (!terms) return showError('Debes aceptar la Política de privacidad y los Términos.');
 
-      // Aquí enviarías el payload al backend.
-      // Demo: simulamos éxito y redirigimos al index.html
-      showSuccess('Registro correcto. Volviendo al inicio...');
-      setTimeout(()=> window.location.href = 'index.html', 1200);
+      try {
+        const { data, error } = await sb.auth.signUp(
+          { email, password },
+          { data: { role, institucion, grado, nombre, apellidos } }
+        );
+        if (error) return showError(error.message);
+
+        showSuccess('Registro exitoso. Revisa tu correo si aplica.');
+        setTimeout(()=> window.location.href = 'login.html', 1500);
+      } catch(err) {
+        showError('Error al conectar con el servidor.');
+      }
     });
 
     function showError(text){ msg.textContent = text; msg.classList.add('error'); }
     function showSuccess(text){ msg.textContent = text; msg.classList.add('success'); }
-    function validateEmail(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+    function validateEmail(email){ return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email); }
   </script>
 </body>
 </html>

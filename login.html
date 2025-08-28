@@ -34,22 +34,13 @@
           <fieldset class="field-group" aria-labelledby="role-legend">
             <legend id="role-legend">Selecciona tu rol <span class="required">*</span></legend>
             <div class="radio-group">
-              <label class="radio">
-                <input type="radio" name="role" value="estudiante" required>
-                <span>Estudiante</span>
-              </label>
-              <label class="radio">
-                <input type="radio" name="role" value="supervisor" required>
-                <span>Supervisor</span>
-              </label>
-              <label class="radio">
-                <input type="radio" name="role" value="evaluado" required>
-                <span>Evaluado</span>
-              </label>
+              <label class="radio"><input type="radio" name="role" value="estudiante" required><span>Estudiante</span></label>
+              <label class="radio"><input type="radio" name="role" value="supervisor" required><span>Supervisor</span></label>
+              <label class="radio"><input type="radio" name="role" value="evaluado" required><span>Evaluado</span></label>
             </div>
           </fieldset>
 
-          <!-- Institution (opcional in login) -->
+          <!-- Institution (opcional) -->
           <div class="field-group">
             <label for="institucion">Institución</label>
             <select id="institucion" name="institucion">
@@ -111,15 +102,21 @@
     </footer>
   </div>
 
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Mostrar / ocultar input "Otra institución" si se selecciona "Otra"
+    const SUPABASE_URL = 'https://gpgxaeynjsvovdzyppoo.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_HuchtYI9DCe9M70OqefGIg_LM9UDoZm';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Mostrar / ocultar input "Otra institución"
     const selectInst = document.getElementById('institucion');
     const instOtra = document.getElementById('institucion-otra');
     if(selectInst){
       selectInst.addEventListener('change', (e) => {
         if (e.target.value === 'Otra') {
           instOtra.classList.remove('hidden');
-          instOtra.required = false; // en login no lo forzamos
+          instOtra.required = false; 
           instOtra.focus();
         } else {
           instOtra.classList.add('hidden');
@@ -138,25 +135,35 @@
       });
     });
 
-    // Login: validación simple y redirección a index.html (ruta relativa)
+    // Login real con Supabase
     const form = document.getElementById('loginForm');
     const msg = document.getElementById('formMessage');
-    form.addEventListener('submit', (e) => {
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       msg.textContent = ''; msg.className = 'form-message';
 
-      const formData = new FormData(form);
-      const role = formData.get('role');
-      const email = formData.get('email')?.trim();
-      const password = formData.get('password');
+      const fd = new FormData(form);
+      const role = fd.get('role');
+      const email = fd.get('email')?.trim();
+      const password = fd.get('password');
 
       if(!role) return showError('Selecciona tu rol.');
       if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Ingresa un correo válido.');
-      if(!password || password.length < 3) return showError('Ingresa tu contraseña.');
+      if(!password || password.length < 8) return showError('La contraseña debe tener al menos 8 caracteres.');
 
-      // Demo: redirigir a index.html si pasa la validación
-      showSuccess('Inicio correcto. Redirigiendo al inicio...');
-      setTimeout(()=> { window.location.href = 'index.html'; }, 900);
+      try {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) return showError(error.message);
+
+        // Guardar rol en localStorage para usar después
+        localStorage.setItem('userRole', role);
+
+        showSuccess('Inicio correcto. Redirigiendo al inicio...');
+        setTimeout(()=> { window.location.href = 'index.html'; }, 1000);
+      } catch(err) {
+        showError('Error al conectar con el servidor.');
+      }
     });
 
     function showError(text){ msg.textContent = text; msg.classList.add('error'); }
@@ -164,3 +171,4 @@
   </script>
 </body>
 </html>
+
