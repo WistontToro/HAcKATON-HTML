@@ -30,7 +30,7 @@
         <p class="muted">Selecciona tu rol, la institución y completa tus datos para registrarte.</p>
 
         <form id="registerForm" novalidate>
-          <!-- ROLE (radio group) -->
+          <!-- ROLE -->
           <fieldset class="field-group" aria-labelledby="role-legend">
             <legend id="role-legend">Selecciona tu rol <span class="required">*</span></legend>
             <div class="radio-group">
@@ -126,7 +126,7 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_HuchtYI9DCe9M70OqefGIg_LM9UDoZm';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Pre-fill role if query param ?role=...
+    // Pre-llenado del rol desde query param
     (function prefillRoleFromQuery(){
       const params = new URLSearchParams(window.location.search);
       const role = params.get('role');
@@ -161,14 +161,13 @@
       });
     });
 
-    // Validación + registro real con Supabase
+    // Validaciones y envío real a Supabase
     const form = document.getElementById('registerForm');
     const msg = document.getElementById('formMessage');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      msg.textContent = '';
-      msg.className = 'form-message';
+      msg.textContent = ''; msg.className = 'form-message';
 
       const fd = new FormData(form);
       const role = fd.get('role');
@@ -191,22 +190,41 @@
       if (!terms) return showError('Debes aceptar la Política de privacidad y los Términos.');
 
       try {
-        const { data, error } = await sb.auth.signUp(
-          { email, password },
-          { data: { role, institucion, grado, nombre, apellidos } }
-        );
-        if (error) return showError(error.message);
+        // 1. Crear usuario en Auth
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if(error) return showError(error.message);
 
-        showSuccess('Registro exitoso. Revisa tu correo si aplica.');
-        setTimeout(()=> window.location.href = 'login.html', 1500);
+        const user = data.user;
+
+        // 2. Insertar en tabla profiles
+        const { error: profileError } = await sb
+          .from('profiles')
+          .insert({
+            id: user.id,
+            nombre,
+            apellidos,
+            rol: role,
+            institucion,
+            grado
+          });
+
+        if(profileError) {
+          console.error(profileError);
+          return showError('Error guardando tu perfil.');
+        }
+
+        showSuccess('Registro correcto. Volviendo al inicio...');
+        setTimeout(()=> window.location.href = 'index.html', 1200);
+
       } catch(err) {
+        console.error(err);
         showError('Error al conectar con el servidor.');
       }
     });
 
     function showError(text){ msg.textContent = text; msg.classList.add('error'); }
     function showSuccess(text){ msg.textContent = text; msg.classList.add('success'); }
-    function validateEmail(email){ return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email); }
+    function validateEmail(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
   </script>
 </body>
 </html>
