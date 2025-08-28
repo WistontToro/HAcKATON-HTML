@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Introducir código — Conciencia Digital</title>
+  <meta name="description" content="Introduce el código enviado para recuperar contraseña">
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">CD</div>
+        <div class="brand-text">
+          <strong>Conciencia Digital</strong><br>
+          <small class="muted">Verificar código</small>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Inicio</a>
+        <a href="login.html">Iniciar sesión</a>
+        <a href="register.html">Registro</a>
+      </nav>
+    </header>
+
+    <main class="main-form">
+      <section class="form-card" aria-labelledby="verify-title">
+        <h1 id="verify-title">Introduce el código</h1>
+        <p id="verify-sub" class="muted">Escribe el código de 6 dígitos que enviamos al correo.</p>
+
+        <form id="verifyForm" novalidate>
+          <div class="field-group">
+            <label for="code">Código <span class="required">*</span></label>
+            <input id="code" name="code" type="text" inputmode="numeric" maxlength="6" placeholder="123456" required>
+          </div>
+
+          <div id="verifyMessage" class="form-message" aria-live="polite"></div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn primary">Enviar código</button>
+            <a id="resendLink" class="btn link" href="recover.html">Enviar nuevamente</a>
+          </div>
+        </form>
+
+        <p class="muted small" style="margin-top:12px" id="sent-info"></p>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <small class="muted">© 2025 Conciencia Digital</small>
+        <a href="contacto.html">Contacto</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Mostrar información del email si viene en query o en sessionStorage
+    (function showSentInfo(){
+      const params = new URLSearchParams(window.location.search);
+      let email = params.get('email') || sessionStorage.getItem('recover_email');
+      const sentAt = sessionStorage.getItem('recover_sent_at');
+      const sentInfo = document.getElementById('sent-info');
+      if(email){
+        email = decodeURIComponent(email);
+        // enmascarar parcialmente el email para privacidad
+        const parts = email.split('@');
+        const name = parts[0] || '';
+        const domain = parts[1] || '';
+        const maskedName = name.length > 2 ? name[0] + '***' + name[name.length-1] : name;
+        sentInfo.textContent = 'Código enviado a: ' + maskedName + '@' + domain + (sentAt ? ' • enviado hace unos segundos' : '');
+      } else {
+        sentInfo.textContent = 'No se detectó correo. Vuelve a la pantalla de recuperación para enviar el código.';
+      }
+
+      // Agregar email al enlace "Enviar nuevamente" para precarga
+      const resend = document.getElementById('resendLink');
+      if(email) resend.href = 'recover.html?email=' + encodeURIComponent(email);
+    })();
+
+    const form = document.getElementById('verifyForm');
+    const msg = document.getElementById('verifyMessage');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      msg.textContent = ''; msg.className = 'form-message';
+
+      const entered = (document.getElementById('code').value || '').trim();
+      if(!/^\d{6}$/.test(entered)){
+        msg.textContent = 'Ingresa un código de 6 dígitos.';
+        msg.classList.add('error');
+        return;
+      }
+
+      const stored = sessionStorage.getItem('recover_code');
+      if(!stored){
+        msg.textContent = 'No hay código activo. Vuelve a enviar el código desde la pantalla de recuperación.';
+        msg.classList.add('error');
+        return;
+      }
+
+      if(entered === stored){
+        msg.textContent = 'Código correcto. Redirigiendo al inicio...';
+        msg.classList.add('success');
+
+        // opcional: borrar los datos de recuperación
+        sessionStorage.removeItem('recover_code');
+        sessionStorage.removeItem('recover_email');
+        sessionStorage.removeItem('recover_sent_at');
+
+        // redirigir al index (o cambiar a página de "crear nueva contraseña")
+        setTimeout(()=> { window.location.href = 'index.html'; }, 1000);
+      } else {
+        msg.textContent = 'Código incorrecto. Verifica e intenta de nuevo o usa "Enviar nuevamente".';
+        msg.classList.add('error');
+      }
+    });
+
+    // Si el usuario viene desde recover.html recién enviado, mostramos el código en consola (solo demo)
+    (function debugShowCode(){
+      const code = sessionStorage.getItem('recover_code');
+      if(code) console.log('Código de recuperación (demo):', code);
+    })();
+  </script>
+</body>
+</html>

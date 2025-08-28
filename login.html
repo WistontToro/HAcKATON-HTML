@@ -27,46 +27,10 @@
     <main class="main-form">
       <section class="form-card" aria-labelledby="form-title">
         <h1 id="form-title">Iniciar sesión</h1>
-        <p class="muted">Selecciona tu rol y accede con tu correo y contraseña.</p>
+        <p class="muted">Selecciona tu rol, accede con tu correo y contraseña.</p>
 
         <form id="loginForm" novalidate>
-          <!-- ROLE (radio group) -->
-          <fieldset class="field-group" aria-labelledby="role-legend">
-            <legend id="role-legend">Selecciona tu rol <span class="required">*</span></legend>
-            <div class="radio-group">
-              <label class="radio">
-                <input type="radio" name="role" value="estudiante" required>
-                <span>Estudiante</span>
-              </label>
-              <label class="radio">
-                <input type="radio" name="role" value="supervisor" required>
-                <span>Supervisor</span>
-              </label>
-              <label class="radio">
-                <input type="radio" name="role" value="evaluado" required>
-                <span>Evaluado</span>
-              </label>
-            </div>
-          </fieldset>
-
-          <!-- Institution (opcional in login) -->
-          <div class="field-group">
-            <label for="institucion">Institución</label>
-            <select id="institucion" name="institucion">
-              <option value="" selected>-- (opcional) --</option>
-              <option>Universidad de Nariño</option>
-              <option>Colegio Nacional</option>
-              <option>Institución Educativa Técnica</option>
-              <option>Otra</option>
-            </select>
-            <input type="text" id="institucion-otra" class="hidden extra-input" placeholder="Especifica la institución (si seleccionaste 'Otra')">
-          </div>
-
-          <!-- Grado (opcional) -->
-          <div class="field-group">
-            <label for="grado">Grado / Nivel (opcional)</label>
-            <input id="grado" name="grado" type="text" placeholder="ej. 11°, 3er semestre">
-          </div>
+          
 
           <!-- Email -->
           <div class="field-group">
@@ -89,7 +53,7 @@
               <input type="checkbox" id="remember">
               <span>Recordarme</span>
             </label>
-            <div style="margin-top:8px"><a href="recuperar.html" class="btn link">Olvidé mi contraseña</a></div>
+            <div style="margin-top:8px"><a href="recover.html" class="btn link">Olvidé mi contraseña</a>
           </div>
 
           <div id="formMessage" aria-live="polite" class="form-message"></div>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Recuperar contraseña — Conciencia Digital</title>
+  <meta name="description" content="Recupera tu contraseña — Conciencia Digital">
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">CD</div>
+        <div class="brand-text">
+          <strong>Conciencia Digital</strong><br>
+          <small class="muted">Recuperar contraseña</small>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Inicio</a>
+        <a href="login.html">Iniciar sesión</a>
+        <a href="register.html">Registro</a>
+      </nav>
+    </header>
+
+    <main class="main-form">
+      <section class="form-card" aria-labelledby="recover-title">
+        <h1 id="recover-title">Recuperar contraseña</h1>
+        <p class="muted">Ingresa el correo asociado a tu cuenta. Te enviaremos un código para restablecer la contraseña.</p>
+
+        <form id="recoverForm" novalidate>
+          <div class="field-group">
+            <label for="email">Correo electrónico <span class="required">*</span></label>
+            <input id="email" name="email" type="email" placeholder="tucorreo@ejemplo.com" required>
+          </div>
+
+          <div id="formMessage" class="form-message" aria-live="polite"></div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn primary">Enviar código</button>
+            <a href="index.html" class="btn link">Volver al inicio</a>
+          </div>
+        </form>
+
+        <p class="muted small" style="margin-top:12px">Si no recibes el correo revisa la carpeta de spam o haz clic en "Enviar nuevamente" desde la pantalla de verificación.</p>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <small class="muted">© 2025 Conciencia Digital</small>
+        <a href="contacto.html">Contacto</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Prefill email si viene en query param ?email=...
+    (function prefillEmail(){
+      const params = new URLSearchParams(window.location.search);
+      const em = params.get('email');
+      if(em) document.getElementById('email').value = decodeURIComponent(em);
+    })();
+
+    const form = document.getElementById('recoverForm');
+    const msg = document.getElementById('formMessage');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      msg.className = 'form-message';
+
+      const email = document.getElementById('email').value.trim();
+      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        msg.textContent = 'Ingresa un correo válido.';
+        msg.classList.add('error');
+        return;
+      }
+
+      // Generar código simulado de 6 dígitos
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Guardarlo en sessionStorage (demo). En producción: enviar por correo desde el backend.
+      sessionStorage.setItem('recover_email', email);
+      sessionStorage.setItem('recover_code', code);
+      sessionStorage.setItem('recover_sent_at', Date.now().toString());
+
+      // Mensaje para el usuario (en desarrollo mostramos el código en consola)
+      console.log('Código de recuperación (demo):', code);
+      msg.textContent = 'Código enviado. Revisa tu correo. Redirigiendo a la pantalla para introducir el código...';
+      msg.classList.add('success');
+
+      // Redirigir a la página de verificación (pasamos email en query para precarga)
+      setTimeout(()=> {
+        window.location.href = 'verify_code.html?email=' + encodeURIComponent(email);
+      }, 1100);
+    });
+  </script>
+</body>
+</html>
