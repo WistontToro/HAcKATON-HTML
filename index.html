@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conciencia Digital — Inicio</title>
+  <meta name="description" content="Plataforma para la concientización sobre fake news, ciberbullying y peligros digitales.">
+  <link rel="icon" href="favicon.ico">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand" aria-hidden="false">
+        <div class="logo" aria-hidden="true">CD</div>
+        <div class="brand-text">
+          <strong>Conciencia Digital</strong><br>
+          <small class="muted">Educación y medición de impacto</small>
+        </div>
+      </div>
+
+      <nav aria-label="Principal" class="nav">
+        <a href="#inicio">Inicio</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a class="nav-btn" href="register.html" id="nav-registro">Regístrate</a>
+        <a class="nav-btn outline" href="login.html" id="nav-login">Iniciar sesión</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="inicio" aria-labelledby="hero-title">
+        <div class="hero-left">
+          <h1 id="hero-title">Convierte la concientización digital en datos reales</h1>
+          <p class="lead">Proporciona a tus estudiantes herramientas y actividades para combatir fake news, ciberbullying y amenazas digitales; mide su alcance y calidad mediante encuestas y métricas.</p>
+
+          <div class="cta" role="group" aria-label="Acciones principales">
+            <a class="btn primary" href="register.html" id="btn-registrate">Regístrate</a>
+            <a class="btn secondary" href="login.html" id="btn-iniciar-sesion">Iniciar sesión</a>
+          </div>
+
+          <p class="muted small" style="margin-top:14px">
+            Roles disponibles: <strong>Estudiante</strong>, <strong>Supervisor</strong>, <strong>Evaluado</strong>.
+          </p>
+        </div>
+
+        <aside class="hero-right" aria-label="Seleccionar rol">
+          <div class="roles">
+            <div class="role" role="button" tabindex="0" data-role="estudiante" aria-pressed="false">
+              <div class="info">
+                <div class="avatar avatar-e">E</div>
+                <div>
+                  <h3>Estudiante</h3>
+                  <p class="muted">Registra tus actividades y resultados de concientización.</p>
+                </div>
+              </div>
+              <div><a class="btn primary small-btn" href="register.html?role=estudiante" data-role-action="estudiante">Seleccionar</a></div>
+            </div>
+
+            <div class="role" role="button" tabindex="0" data-role="supervisor" aria-pressed="false">
+              <div class="info">
+                <div class="avatar avatar-s">S</div>
+                <div>
+                  <h3>Supervisor</h3>
+                  <p class="muted">Monitorea el progreso de estudiantes y verifica resultados.</p>
+                </div>
+              </div>
+              <div><a class="btn primary small-btn" href="register.html?role=supervisor" data-role-action="supervisor">Seleccionar</a></div>
+            </div>
+
+            <div class="role" role="button" tabindex="0" data-role="evaluado" aria-pressed="false">
+              <div class="info">
+                <div class="avatar avatar-v">V</div>
+                <div>
+                  <h3>Evaluado</h3>
+                  <p class="muted">Recibe la concientización y responde encuestas para medir comprensión.</p>
+                </div>
+              </div>
+              <div><a class="btn primary small-btn" href="register.html?role=evaluado" data-role-action="evaluado">Seleccionar</a></div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section id="como-funciona" style="margin-top:12px">
+        <h2>¿Cómo funciona?</h2>
+        <div class="features">
+          <div class="card">
+            <h3>Formularios & Evaluaciones</h3>
+            <p class="muted">Crea encuestas dinámicas: preguntas abiertas, opción múltiple, escala Likert. Almacenamiento de respuestas y análisis por estudiante y campaña.</p>
+          </div>
+          <div class="card">
+            <h3>Monitoreo & Supervisión</h3>
+            <p class="muted">Panel para supervisores: ver actividades, aprobar intervenciones y descargar reportes.</p>
+          </div>
+          <div class="card">
+            <h3>Notificaciones & Alcance</h3>
+            <p class="muted">Notificaciones por correo y web push; métricas de alcance (número de personas impactadas, tasa de respuesta, tasa de comprensión).</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="metricas" style="margin-top:12px">
+        <h2 id="metricas">Métricas rápidas (demo)</h2>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+          <div class="card" style="flex:1;min-width:160px">
+            <strong id="count-campanas">12</strong>
+            <p class="muted">Campañas activas</p>
+          </div>
+          <div class="card" style="flex:1;min-width:160px">
+            <strong id="count-usuarios">1.240</strong>
+            <p class="muted">Usuarios registrados</p>
+          </div>
+          <div class="card" style="flex:1;min-width:160px">
+            <strong id="count-respuestas">8.340</strong>
+            <p class="muted">Respuestas recopiladas</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div>
+          <small>© 2025 Conciencia Digital — <a href="privacidad.html">Política de privacidad</a> • <a href="terminos.html">Términos</a></small>
+        </div>
+        <div>
+          <a href="contacto.html">Contacto</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Accesibilidad: permitir Enter en tarjetas (usa enlaces relativos)
+    document.querySelectorAll('.role[role="button"]').forEach(card=>{
+      card.addEventListener('keydown', (e)=>{
+        if(e.key === "Enter"){
+          const a = card.querySelector('a[data-role-action]');
+          if(a) window.location.href = a.getAttribute('href');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

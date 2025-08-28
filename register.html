@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Registro — Conciencia Digital</title>
+  <meta name="description" content="Registro de usuarios — Conciencia Digital (Estudiante, Supervisor, Evaluado).">
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">CD</div>
+        <div class="brand-text">
+          <strong>Conciencia Digital</strong><br>
+          <small class="muted">Registro de usuario</small>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Inicio</a>
+        <a href="login.html">Iniciar sesión</a>
+      </nav>
+    </header>
+
+    <main class="main-form">
+      <section class="form-card" aria-labelledby="form-title">
+        <h1 id="form-title">Crear cuenta</h1>
+        <p class="muted">Selecciona tu rol, la institución y completa tus datos para registrarte.</p>
+
+        <form id="registerForm" novalidate>
+          <!-- ROLE (radio group) -->
+          <fieldset class="field-group" aria-labelledby="role-legend">
+            <legend id="role-legend">Selecciona tu rol <span class="required">*</span></legend>
+            <div class="radio-group">
+              <label class="radio">
+                <input type="radio" name="role" value="estudiante" required>
+                <span>Estudiante</span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="role" value="supervisor" required>
+                <span>Supervisor</span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="role" value="evaluado" required>
+                <span>Evaluado</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- Institution -->
+          <div class="field-group">
+            <label for="institucion">Institución <span class="required">*</span></label>
+            <select id="institucion" name="institucion" required>
+              <option value="" selected disabled>Selecciona tu institución</option>
+              <option>Universidad de Nariño</option>
+              <option>Colegio Nacional</option>
+              <option>Institución Educativa Técnica</option>
+              <option>Otra</option>
+            </select>
+            <input type="text" id="institucion-otra" class="hidden extra-input" placeholder="Especifica la institución (si seleccionaste 'Otra')">
+          </div>
+
+          <!-- Grado -->
+          <div class="field-group">
+            <label for="grado">Grado / Nivel (ej. 11°, 3er semestre) <span class="required">*</span></label>
+            <input id="grado" name="grado" type="text" placeholder="Ingresa tu grado o nivel" required>
+          </div>
+
+          <!-- Nombre completo -->
+          <div class="two-col">
+            <div class="field-group">
+              <label for="nombre">Nombre <span class="required">*</span></label>
+              <input id="nombre" name="nombre" type="text" placeholder="Nombre" required>
+            </div>
+            <div class="field-group">
+              <label for="apellidos">Apellidos <span class="required">*</span></label>
+              <input id="apellidos" name="apellidos" type="text" placeholder="Apellidos" required>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="field-group">
+            <label for="email">Correo electrónico <span class="required">*</span></label>
+            <input id="email" name="email" type="email" placeholder="tucorreo@ejemplo.com" required>
+          </div>
+
+          <!-- Password -->
+          <div class="two-col">
+            <div class="field-group">
+              <label for="password">Contraseña <span class="required">*</span></label>
+              <div class="password-wrap">
+                <input id="password" name="password" type="password" minlength="8" placeholder="Mínimo 8 caracteres" required>
+                <button type="button" class="show-pass" aria-label="Mostrar contraseña">👁️</button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="passwordConfirm">Confirmar contraseña <span class="required">*</span></label>
+              <input id="passwordConfirm" name="passwordConfirm" type="password" minlength="8" placeholder="Repite la contraseña" required>
+            </div>
+          </div>
+
+          <!-- Terms -->
+          <div class="field-group checkbox-group">
+            <label class="checkbox">
+              <input type="checkbox" id="terms" required>
+              <span>Acepto la <a href="privacidad.html">Política de privacidad</a> y los <a href="terminos.html">Términos</a>.</span>
+            </label>
+          </div>
+
+          <div id="formMessage" aria-live="polite" class="form-message"></div>
+
+          <!-- Buttons -->
+          <div class="form-actions">
+            <button type="submit" class="btn primary">Crear cuenta</button>
+            <a href="login.html" class="btn link">¿Ya tienes cuenta? Inicia sesión</a>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <small class="muted">© 2025 Conciencia Digital — <a href="privacidad.html">Política de privacidad</a></small>
+        <a href="contacto.html">Contacto</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Pre-llenado del role desde query param (si vino ?role=estudiante por ejemplo)
+    (function prefillRoleFromQuery(){
+      const params = new URLSearchParams(window.location.search);
+      const role = params.get('role');
+      if(role){
+        const radio = document.querySelector(`input[name="role"][value="${role}"]`);
+        if(radio) radio.checked = true;
+      }
+    })();
+
+    // Mostrar / ocultar input "Otra institución"
+    const selectInst = document.getElementById('institucion');
+    const instOtra = document.getElementById('institucion-otra');
+    selectInst.addEventListener('change', (e) => {
+      if (e.target.value === 'Otra') {
+        instOtra.classList.remove('hidden');
+        instOtra.required = true;
+        instOtra.focus();
+      } else {
+        instOtra.classList.add('hidden');
+        instOtra.required = false;
+        instOtra.value = '';
+      }
+    });
+
+    // Toggle mostrar contraseña
+    document.querySelectorAll('.show-pass').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = btn.parentElement.querySelector('input');
+        if (!input) return;
+        input.type = input.type === 'password' ? 'text' : 'password';
+        btn.textContent = input.type === 'password' ? '👁️' : '🙈';
+      });
+    });
+
+    // Validaciones y envío (simulado)
+    const form = document.getElementById('registerForm');
+    const msg = document.getElementById('formMessage');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      msg.className = 'form-message';
+
+      const formData = new FormData(form);
+      const role = formData.get('role');
+      const institucion = formData.get('institucion') === 'Otra' ? formData.get('institucion-otra') : formData.get('institucion');
+      const grado = formData.get('grado');
+      const nombre = formData.get('nombre');
+      const apellidos = formData.get('apellidos');
+      const email = formData.get('email');
+      const password = formData.get('password');
+      const passwordConfirm = formData.get('passwordConfirm');
+      const terms = document.getElementById('terms').checked;
+
+      if (!role) return showError('Selecciona un rol.');
+      if (!institucion) return showError('Selecciona o especifica tu institución.');
+      if (!grado) return showError('Ingresa tu grado o nivel.');
+      if (!nombre || !apellidos) return showError('Completa tu nombre y apellidos.');
+      if (!email || !validateEmail(email)) return showError('Ingresa un correo válido.');
+      if (!password || password.length < 8) return showError('La contraseña debe tener al menos 8 caracteres.');
+      if (password !== passwordConfirm) return showError('Las contraseñas no coinciden.');
+      if (!terms) return showError('Debes aceptar la Política de privacidad y los Términos.');
+
+      // Aquí enviarías el payload al backend.
+      // Demo: simulamos éxito y redirigimos al index.html
+      showSuccess('Registro correcto. Volviendo al inicio...');
+      setTimeout(()=> window.location.href = 'index.html', 1200);
+    });
+
+    function showError(text){ msg.textContent = text; msg.classList.add('error'); }
+    function showSuccess(text){ msg.textContent = text; msg.classList.add('success'); }
+    function validateEmail(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+  </script>
+</body>
+</html>
