@@ -30,11 +30,24 @@
         <p class="muted">Accede con tu correo y contraseña.</p>
 
         <form id="loginForm" novalidate>
-          
+          <!-- Institution (opcional) -->
+          <div class="field-group">
+            <label for="institucion">Institución</label>
+            <select id="institucion" name="institucion">
+              <option value="" selected>-- (opcional) --</option>
+              <option>Universidad de Nariño</option>
+              <option>Colegio Nacional</option>
+              <option>Institución Educativa Técnica</option>
+              <option>Otra</option>
+            </select>
+            <input type="text" id="institucion-otra" class="hidden extra-input" placeholder="Especifica la institución (si seleccionaste 'Otra')">
+          </div>
 
-          
-
-          
+          <!-- Grado (opcional) -->
+          <div class="field-group">
+            <label for="grado">Grado / Nivel (opcional)</label>
+            <input id="grado" name="grado" type="text" placeholder="ej. 11°, 3er semestre">
+          </div>
 
           <!-- Email -->
           <div class="field-group">
@@ -121,20 +134,15 @@
       msg.textContent = ''; msg.className = 'form-message';
 
       const fd = new FormData(form);
-      const role = fd.get('role');
       const email = fd.get('email')?.trim();
       const password = fd.get('password');
 
-      if(!role) return showError('Selecciona tu rol.');
       if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Ingresa un correo válido.');
       if(!password || password.length < 8) return showError('La contraseña debe tener al menos 8 caracteres.');
 
       try {
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) return showError(error.message);
-
-        // Guardar rol en localStorage para usar después
-        localStorage.setItem('userRole', role);
 
         showSuccess('Inicio correcto. Redirigiendo al inicio...');
         setTimeout(()=> { window.location.href = 'index.html'; }, 1000);
@@ -148,4 +156,3 @@
   </script>
 </body>
 </html>
-
