@@ -138,8 +138,8 @@ header{
   color: #042027;
 }
 .avatar-e{background:linear-gradient(135deg, #a2e12a,#3aed52)}
-.avatar-s{background:linear-gradient(135deg,#cfc3bb,#faf7f8)}
-.avatar-v{background:linear-gradient(135deg,#0855c9,#10b981)}
+.avatar-s{background:linear-gradient(135deg,#efedec,#faf7f8)}
+.avatar-v{background:linear-gradient(135deg,#0855c9,#1d276b)}
 
 /* features / cards */
 .features{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px 0}
