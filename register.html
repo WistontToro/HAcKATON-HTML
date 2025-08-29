@@ -30,6 +30,12 @@
         <p class="muted">Selecciona tu rol, la institución y completa tus datos para registrarte.</p>
 
         <form id="registerForm" novalidate>
+          <!-- Número de identificación -->
+          <div class="field-group">
+            <label for="numero_id">Número de identificación <span class="required">*</span></label>
+            <input id="numero_id" name="numero_id" type="text" placeholder="Cédula o Tarjeta de Identidad" required>
+          </div>
+
           <!-- ROLE -->
           <fieldset class="field-group" aria-labelledby="role-legend">
             <legend id="role-legend">Selecciona tu rol <span class="required">*</span></legend>
@@ -126,16 +132,6 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_HuchtYI9DCe9M70OqefGIg_LM9UDoZm';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Pre-llenado del rol desde query param
-    (function prefillRoleFromQuery(){
-      const params = new URLSearchParams(window.location.search);
-      const role = params.get('role');
-      if(role){
-        const radio = document.querySelector(`input[name="role"][value="${role}"]`);
-        if(radio) radio.checked = true;
-      }
-    })();
-
     // Mostrar / ocultar input "Otra institución"
     const selectInst = document.getElementById('institucion');
     const instOtra = document.getElementById('institucion-otra');
@@ -170,6 +166,7 @@
       msg.textContent = ''; msg.className = 'form-message';
 
       const fd = new FormData(form);
+      const numero_id = fd.get('numero_id').trim();
       const role = fd.get('role');
       const institucion = fd.get('institucion') === 'Otra' ? fd.get('institucion-otra') : fd.get('institucion');
       const grado = fd.get('grado');
@@ -180,6 +177,7 @@
       const passwordConfirm = fd.get('passwordConfirm');
       const terms = document.getElementById('terms').checked;
 
+      if (!numero_id) return showError('Ingresa tu número de identificación.');
       if (!role) return showError('Selecciona un rol.');
       if (!institucion) return showError('Selecciona o especifica tu institución.');
       if (!grado) return showError('Ingresa tu grado o nivel.');
@@ -201,6 +199,7 @@
           .from('profiles')
           .insert({
             id: user.id,
+            numero_id,
             nombre,
             apellidos,
             rol: role,
@@ -213,8 +212,8 @@
           return showError('Error guardando tu perfil.');
         }
 
-        showSuccess('Registro correcto. Volviendo al inicio...');
-        setTimeout(()=> window.location.href = 'index.html', 1200);
+        showSuccess('Registro correcto. Ahora puedes iniciar sesión.');
+        setTimeout(()=> window.location.href = 'login.html', 1500);
 
       } catch(err) {
         console.error(err);
