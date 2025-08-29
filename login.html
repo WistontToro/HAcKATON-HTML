@@ -95,32 +95,61 @@
     const form = document.getElementById('loginForm');
     const msg = document.getElementById('formMessage');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      msg.textContent = '';
-      msg.className = 'form-message';
+  form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  msg.textContent = '';
+  msg.className = 'form-message';
 
-      const fd = new FormData(form);
-      const email = fd.get('email')?.trim();
-      const password = fd.get('password');
+  const fd = new FormData(form);
+  const email = fd.get('email')?.trim();
+  const password = fd.get('password');
 
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        return showError('Ingresa un correo válido.');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return showError('Ingresa un correo válido.');
+  }
+  if (!password || password.length < 8) {
+    return showError('La contraseña debe tener al menos 8 caracteres.');
+  }
+
+  try {
+    // 1. Login con Supabase
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) return showError(error.message);
+
+    // 2. Consulta el rol desde la tabla profiles
+    const userId = data.user.id;
+    const { data: profile, error: profileError } = await sb
+      .from('profiles')
+      .select('rol')
+      .eq('id', userId)
+      .single();
+
+    if (profileError || !profile) {
+      return showError('No se pudo determinar el rol del usuario.');
+    }
+
+    const userRole = profile.rol;
+    localStorage.setItem('userRole', userRole);
+
+    // 3. Redirige según el rol
+    showSuccess('Inicio correcto. Redirigiendo...');
+    setTimeout(() => {
+      if (userRole === 'estudiante') {
+        window.location.href = 'student_dashboard.html';
+      } else if (userRole === 'supervisor') {
+        window.location.href = 'supervisor_dashboard.html';
+      } else if (userRole === 'evaluado') {
+        window.location.href = 'evaluado_dashboard.html';
+      } else {
+        window.location.href = 'index.html';
       }
-      if (!password || password.length < 8) {
-        return showError('La contraseña debe tener al menos 8 caracteres.');
-      }
+    }, 1000);
 
-      try {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) return showError(error.message);
+  } catch (err) {
+    showError('Error al conectar con el servidor.');
+  }
+});
 
-        showSuccess('Inicio correcto. Redirigiendo al inicio...');
-        setTimeout(() => { window.location.href = 'index.html'; }, 1000);
-      } catch (err) {
-        showError('Error al conectar con el servidor.');
-      }
-    });
 
     function showError(text) {
       msg.textContent = text;

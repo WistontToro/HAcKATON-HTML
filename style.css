@@ -47,8 +47,12 @@ header{
 
 /* nav */
 .nav{display:flex;align-items:center;gap:12px}
-.nav a{color:var(--muted);text-decoration:none;margin-left:8px;font-size:14px}
-.nav-btn{
+.nav a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 8px;
+  font-size: 14px;
+}.nav-btn{
   background:var(--accent);
   color:#042027;
   border:0;
@@ -57,10 +61,10 @@ header{
   cursor:pointer;
   font-weight:600;
 }
-.nav-btn.outline{
-  background:transparent;
-  color:var(--muted);
-  border:1px solid rgba(255,255,255,0.06);
+.nav-btn.outline {
+  color: #fff !important;
+  border: 1px solid #fff;
+  background: transparent;
 }
 
 /* hero */
@@ -91,8 +95,19 @@ header{
 }
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:var(--accent);color:#042027; box-shadow: 0 6px 18px rgba(6,182,212,0.12);}
-.btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+.btn.secondary {
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+}
 .btn.small-btn{padding:8px 12px;font-size:14px}
+
+.btn.logo-green {
+  background: #96da1b; 
+  color: #042027;
+  box-shadow: 0 6px 18px rgba(141,211,59,0.13);
+}
+
 
 /* roles aside */
 .roles{
@@ -122,9 +137,9 @@ header{
   width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;
   color: #042027;
 }
-.avatar-e{background:linear-gradient(135deg,#06b6d4,#7c3aed)}
-.avatar-s{background:linear-gradient(135deg,#f97316,#f43f5e)}
-.avatar-v{background:linear-gradient(135deg,#34d399,#10b981)}
+.avatar-e{background:linear-gradient(135deg, #a2e12a,#3aed52)}
+.avatar-s{background:linear-gradient(135deg,#cfc3bb,#faf7f8)}
+.avatar-v{background:linear-gradient(135deg,#0855c9,#10b981)}
 
 /* features / cards */
 .features{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px 0}
@@ -147,6 +162,16 @@ footer{border-top:1px solid rgba(255,255,255,0.03);padding:18px 0;margin-top:28p
   .features{grid-template-columns:1fr;}
   .nav a{display:none}
   .nav-btn{padding:8px 10px}
+}
+
+
+@media (max-width: 500px) {
+  .brand-text strong { font-size: 14px; }
+  .hero-left h1 { font-size: 19px; }
+  .card, .roles { padding: 10px; }
+  .btn, .nav-btn { padding: 10px 12px; font-size: 15px; }
+  footer { padding: 8px 0; font-size: 13px; }
+  .metrics-grid, .features { flex-direction: column !important; gap: 8px; }
 }
 
 /* form page styles (reutilizadas para register/login) */

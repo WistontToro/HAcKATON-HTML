@@ -52,3 +52,37 @@ function showSuccess(text) {
   msg.textContent = text;
   msg.classList.add('success');
 }
+
+const user = data.user; // tras el login
+const userId = user.id;
+
+// Consultar perfil en la tabla profiles:
+const { data: profile, error: profileError } = await sb
+  .from('profiles')
+  .select('rol')
+  .eq('id', userId)
+  .single();
+
+if (profileError) {
+  showError('Error al consultar rol del usuario');
+  return;
+}
+
+const userRole = profile.rol;
+localStorage.setItem('userRole', userRole);
+
+if (userRole === 'estudiante') {
+  window.location.href = 'student_dashboard.html';
+} else if (userRole === 'supervisor') {
+  window.location.href = 'supervisor_dashboard.html';
+} else if (userRole === 'evaluado') {
+  window.location.href = 'evaluado_dashboard.html';
+} else {
+  window.location.href = 'index.html'; // por defecto
+}
+
+// Al inicio de student_dashboard.html
+const role = localStorage.getItem('userRole');
+if (role !== 'estudiante') {
+  window.location.href = 'login.html';
+}
