@@ -30,25 +30,6 @@
         <p class="muted">Accede con tu correo y contraseña.</p>
 
         <form id="loginForm" novalidate>
-          <!-- Institution (opcional) -->
-          <div class="field-group">
-            <label for="institucion">Institución</label>
-            <select id="institucion" name="institucion">
-              <option value="" selected>-- (opcional) --</option>
-              <option>Universidad de Nariño</option>
-              <option>Colegio Nacional</option>
-              <option>Institución Educativa Técnica</option>
-              <option>Otra</option>
-            </select>
-            <input type="text" id="institucion-otra" class="hidden extra-input" placeholder="Especifica la institución (si seleccionaste 'Otra')">
-          </div>
-
-          <!-- Grado (opcional) -->
-          <div class="field-group">
-            <label for="grado">Grado / Nivel (opcional)</label>
-            <input id="grado" name="grado" type="text" placeholder="ej. 11°, 3er semestre">
-          </div>
-
           <!-- Email -->
           <div class="field-group">
             <label for="email">Correo electrónico <span class="required">*</span></label>
@@ -70,7 +51,9 @@
               <input type="checkbox" id="remember">
               <span>Recordarme</span>
             </label>
-            <div style="margin-top:8px"><a href="recover.html" class="btn link">Olvidé mi contraseña</a>
+            <div style="margin-top:8px">
+              <a href="recover.html" class="btn link">Olvidé mi contraseña</a>
+            </div>
           </div>
 
           <div id="formMessage" aria-live="polite" class="form-message"></div>
@@ -99,27 +82,10 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_HuchtYI9DCe9M70OqefGIg_LM9UDoZm';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Mostrar / ocultar input "Otra institución"
-    const selectInst = document.getElementById('institucion');
-    const instOtra = document.getElementById('institucion-otra');
-    if(selectInst){
-      selectInst.addEventListener('change', (e) => {
-        if (e.target.value === 'Otra') {
-          instOtra.classList.remove('hidden');
-          instOtra.required = false; 
-          instOtra.focus();
-        } else {
-          instOtra.classList.add('hidden');
-          instOtra.value = '';
-        }
-      });
-    }
-
     // Toggle mostrar contraseña
     document.querySelectorAll('.show-pass').forEach(btn => {
       btn.addEventListener('click', () => {
         const input = btn.parentElement.querySelector('input');
-        if (!input) return;
         input.type = input.type === 'password' ? 'text' : 'password';
         btn.textContent = input.type === 'password' ? '👁️' : '🙈';
       });
@@ -131,28 +97,39 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      msg.textContent = ''; msg.className = 'form-message';
+      msg.textContent = '';
+      msg.className = 'form-message';
 
       const fd = new FormData(form);
       const email = fd.get('email')?.trim();
       const password = fd.get('password');
 
-      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('Ingresa un correo válido.');
-      if(!password || password.length < 8) return showError('La contraseña debe tener al menos 8 caracteres.');
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return showError('Ingresa un correo válido.');
+      }
+      if (!password || password.length < 8) {
+        return showError('La contraseña debe tener al menos 8 caracteres.');
+      }
 
       try {
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) return showError(error.message);
 
         showSuccess('Inicio correcto. Redirigiendo al inicio...');
-        setTimeout(()=> { window.location.href = 'index.html'; }, 1000);
-      } catch(err) {
+        setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+      } catch (err) {
         showError('Error al conectar con el servidor.');
       }
     });
 
-    function showError(text){ msg.textContent = text; msg.classList.add('error'); }
-    function showSuccess(text){ msg.textContent = text; msg.classList.add('success'); }
+    function showError(text) {
+      msg.textContent = text;
+      msg.classList.add('error');
+    }
+    function showSuccess(text) {
+      msg.textContent = text;
+      msg.classList.add('success');
+    }
   </script>
 </body>
 </html>
