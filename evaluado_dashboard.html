@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Panel Evaluado — Conciencia Digital</title>
+  <meta name="description" content="Panel para evaluados — Conciencia Digital">
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Ajustes gráficos específicos para este panel (coherentes con style.css) */
+    .dashboard-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}
+    .header-left{display:flex;align-items:center;gap:12px}
+    .profile-dropdown{position:relative}
+    .profile-btn{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:10px;padding:6px 10px;cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
+    .profile-menu{position:absolute;top:calc(100% + 8px);left:0;background:var(--card);border-radius:10px;padding:8px;box-shadow:0 12px 28px rgba(2,6,12,0.6);display:none;min-width:180px;z-index:30}
+    .profile-menu a{display:block;padding:8px;border-radius:8px;color:var(--muted);text-decoration:none}
+    .profile-menu a:hover{background:rgba(255,255,255,0.02);color:var(--text)}
+
+    .header-actions{display:flex;align-items:center;gap:10px}
+    .icon-btn{background:var(--card);border-radius:10px;padding:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.03);display:inline-flex;align-items:center;gap:8px}
+    .icon-btn .count-badge{background:#ffb4b4;color:#042027;padding:2px 6px;border-radius:12px;font-size:12px;margin-left:6px}
+
+    .dashboard-main{display:flex;gap:18px;margin-top:18px}
+    .left-panel{width:300px;background:var(--card);padding:16px;border-radius:12px}
+    .content-panel{flex:1;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px}
+
+    .menu-item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;cursor:pointer;background:var(--glass);margin-bottom:10px;border:1px solid transparent}
+    .menu-item.disabled{opacity:0.45;cursor:not-allowed}
+    .menu-item.active{box-shadow:0 10px 30px rgba(2,6,12,0.45);border-color:rgba(255,255,255,0.03)}
+    .menu-item h4{margin:0}
+    .menu-item p{margin:0;font-size:13px;color:var(--muted)}
+
+    .section{display:none}
+    .section.active{display:block}
+
+    .question{padding:12px;border-radius:8px;background:var(--card);margin-bottom:10px}
+    .options label{display:block;margin-bottom:6px;cursor:pointer}
+    .pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+
+    /* responsive */
+    @media (max-width:980px){
+      .dashboard-main{flex-direction:column}
+      .left-panel{width:100%}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="dashboard-header" role="banner">
+      <div class="header-left">
+        <div class="brand" aria-hidden="false">
+          <div class="logo" aria-hidden="true">CD</div>
+          <div class="brand-text" style="margin-left:8px">
+            <strong>Conciencia Digital</strong><br>
+            <small class="muted">Panel Evaluado</small>
+          </div>
+        </div>
+
+        <div class="profile-dropdown" id="profileDropdown">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false">
+            <div style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700">V</div>
+            <div>
+              <div style="font-weight:700">Evaluado</div>
+              <div class="muted" style="font-size:12px">Visitante</div>
+            </div>
+            <div style="margin-left:8px;color:var(--muted)">▾</div>
+          </button>
+
+          <div class="profile-menu" id="profileMenu" role="menu" aria-hidden="true">
+            <a href="#" role="menuitem">Cuenta</a>
+            <a href="#" role="menuitem">Perfil</a>
+            <a href="#" role="menuitem">Configuraciones</a>
+            <a href="#" role="menuitem">Cerrar sesión</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions" aria-hidden="false">
+        <button class="icon-btn" id="helpBtn" title="Ayuda">❓ Ayuda</button>
+        <button class="icon-btn" id="notifBtn" title="Notificaciones">🔔 <span class="count-badge" id="notifCount">1</span></button>
+        <button class="icon-btn" id="statsBtn" title="Estadísticas">📊 Estadísticas</button>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <div class="dashboard-main" role="main">
+      <!-- Left -->
+      <aside class="left-panel" aria-label="Opciones">
+        <div style="font-weight:700;margin-bottom:10px">Menú</div>
+
+        <div id="menuStudent" class="menu-item active" data-section="student" tabindex="0">
+          <div>
+            <h4>Estudiante encargado</h4>
+            <p class="muted">Valida el código del estudiante</p>
+          </div>
+          <div id="statusStudent">●</div>
+        </div>
+
+        <!-- Evaluación inicialmente deshabilitada -->
+        <div id="menuEval" class="menu-item disabled" data-section="evaluation" tabindex="0">
+          <div>
+            <h4>Evaluación</h4>
+            <p class="muted">Responde el examen (se habilita tras validar código)</p>
+          </div>
+          <div id="statusEval">●</div>
+        </div>
+
+        <!-- Comentarios inicialmente deshabilitada -->
+        <div id="menuComments" class="menu-item disabled" data-section="comments" tabindex="0">
+          <div>
+            <h4>Comentarios y recomendaciones</h4>
+            <p class="muted">Se habilita si la evaluación >= 8</p>
+          </div>
+          <div id="statusComments">●</div>
+        </div>
+      </aside>
+
+      <!-- Right -->
+      <section class="content-panel" aria-live="polite">
+        <!-- Opción 1: Estudiante encargado -->
+        <div id="student" class="section active">
+          <h2>Estudiante a cargo</h2>
+          <p class="muted">Ingresa el código del estudiante a cargo para ver su nombre y colegio (demo).</p>
+
+          <div style="max-width:560px;margin-top:12px">
+            <div class="field-group">
+              <label for="studentCode">Código del estudiante</label>
+              <input id="studentCode" type="text" placeholder="Código asignado al estudiante">
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+              <button id="validateStudentBtn" class="btn primary">Validar</button>
+              <button id="clearStudentBtn" class="btn secondary">Limpiar</button>
+            </div>
+
+            <div id="studentInfo" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <!-- Opción 2: Evaluación (mismo examen) -->
+        <div id="evaluation" class="section">
+          <h2>Evaluación</h2>
+          <p class="muted">Responde el examen (12 preguntas, 3 por página). Debes contestar las 3 preguntas de cada página para avanzar.</p>
+
+          <div id="evalArea" style="margin-top:12px;max-width:900px">
+            <div id="questionsContainer"></div>
+
+            <div class="pager" style="margin-top:12px">
+              <div class="muted" id="evalPageInfo">Página 1 / 4</div>
+              <div>
+                <button id="prevEvalBtn" class="btn secondary" disabled>Anterior</button>
+                <button id="nextEvalBtn" class="btn primary" disabled>Siguiente</button>
+              </div>
+            </div>
+
+            <div id="evalResult" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <!-- Opción 3: Comentarios y recomendaciones -->
+        <div id="comments" class="section">
+          <h2>Comentarios y recomendaciones</h2>
+          <p class="muted">Rellena si quieres. No es obligatorio.</p>
+
+          <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px">
+            <div style="flex:1;min-width:260px">
+              <label for="comentarios">Comentarios</label>
+              <textarea id="comentarios" rows="8" placeholder="Escribe tus comentarios aquí..." style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);color:var(--text)"></textarea>
+            </div>
+
+            <div style="flex:1;min-width:260px">
+              <label for="recomendaciones">Recomendaciones</label>
+              <textarea id="recomendaciones" rows="8" placeholder="Escribe recomendaciones aquí..." style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);color:var(--text)"></textarea>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <button id="saveCommentsBtn" class="btn primary">Guardar</button>
+            <span id="saveCommentsMsg" class="muted" style="margin-left:10px"></span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     * Datos de ejemplo (simulada "base de datos" de estudiantes)
+     ***********************/
+    const studentsDB = {
+      'STU001': { nombre: 'María Pérez', colegio: 'Colegio Nacional' },
+      'STU002': { nombre: 'Juan Gómez', colegio: 'Institución Educativa Técnica' },
+      // el código de prueba solicitado (activo)
+      '556633': { nombre: 'Wiston Toro', colegio: 'Institución Demo' }
+    };
+
+    /***********************
+     * Header / profile dropdown
+     ***********************/
+    const profileBtn = document.getElementById('profileBtn');
+    const profileMenu = document.getElementById('profileMenu');
+    profileBtn.addEventListener('click', () => {
+      const expanded = profileBtn.getAttribute('aria-expanded') === 'true';
+      profileBtn.setAttribute('aria-expanded', String(!expanded));
+      profileMenu.style.display = expanded ? 'none' : 'block';
+      profileMenu.setAttribute('aria-hidden', expanded ? 'true' : 'false');
+    });
+    document.addEventListener('click', (e) => {
+      if(!profileBtn.contains(e.target) && !profileMenu.contains(e.target)){
+        profileMenu.style.display = 'none';
+        profileBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    /***********************
+     * Navegación entre secciones (bloquear si disabled)
+     ***********************/
+    const menuItems = {
+      student: document.getElementById('menuStudent'),
+      evaluation: document.getElementById('menuEval'),
+      comments: document.getElementById('menuComments')
+    };
+    const sections = {
+      student: document.getElementById('student'),
+      evaluation: document.getElementById('evaluation'),
+      comments: document.getElementById('comments')
+    };
+
+    function isDisabledMenu(el){
+      return el.classList.contains('disabled');
+    }
+
+    function showSection(name){
+      const menuEl = menuItems[name];
+      if(isDisabledMenu(menuEl)){
+        alert('Esa opción aún no está disponible. Completa los pasos previos.');
+        return;
+      }
+      Object.values(menuItems).forEach(mi => mi.classList.remove('active'));
+      menuEl.classList.add('active');
+      Object.values(sections).forEach(s => s.classList.remove('active'));
+      sections[name].classList.add('active');
+      if(name === 'evaluation') renderEvalPage();
+    }
+
+    Object.entries(menuItems).forEach(([name, el])=>{
+      el.addEventListener('click', ()=> showSection(name));
+      el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') showSection(name); });
+    });
+
+    /***********************
+     * Opción 1: validar código de estudiante
+     ***********************/
+    const studentCodeInput = document.getElementById('studentCode');
+    const validateStudentBtn = document.getElementById('validateStudentBtn');
+    const clearStudentBtn = document.getElementById('clearStudentBtn');
+    const studentInfo = document.getElementById('studentInfo');
+    const menuEval = document.getElementById('menuEval');
+
+    validateStudentBtn.addEventListener('click', ()=>{
+      const code = (studentCodeInput.value || '').trim();
+      studentInfo.textContent = '';
+      // reset evaluation & comments availability if code changed
+      if(!code){
+        studentInfo.innerHTML = '<div class="form-message error">Ingresa un código.</div>';
+        return;
+      }
+      const found = studentsDB[code];
+      if(found){
+        studentInfo.innerHTML = `<div class="card" style="padding:12px;border-radius:8px"><strong>${found.nombre}</strong><div class="muted" style="margin-top:6px">${found.colegio}</div></div>`;
+        // habilitar evaluación
+        menuEval.classList.remove('disabled');
+        document.getElementById('statusStudent').textContent = '✓';
+        document.getElementById('statusEval').textContent = '●';
+      } else {
+        studentInfo.innerHTML = '<div class="form-message error">Código no encontrado.</div>';
+        // keep evaluation disabled
+      }
+    });
+
+    clearStudentBtn.addEventListener('click', ()=>{
+      studentCodeInput.value = '';
+      studentInfo.textContent = '';
+      // disable evaluation & comments again
+      menuEval.classList.add('disabled');
+      document.getElementById('statusStudent').textContent = '●';
+      document.getElementById('statusEval').textContent = '●';
+      // Also disable comments
+      menuItems.comments.classList.add('disabled');
+      document.getElementById('statusComments').textContent = '●';
+    });
+
+    /***********************
+     * Opción 2: examen (idéntico al del estudiante)
+     ***********************/
+    const questions = [
+      { q: '¿Qué es una noticia falsa?', options: ['Información verificada','Información creada para engañar','Un artículo científico','Una reseña'], correctIndex: 1 },
+      { q: '¿Qué debes revisar para verificar una fuente?', options: ['URL','Hora del día','Color de la web','Tipo de letra'], correctIndex: 0 },
+      { q: '¿Qué acción es recomendable antes de compartir una noticia?', options: ['Compartir rápido','Verificar en otras fuentes','Ignorar todo','Copiar y pegar'], correctIndex: 1 },
+
+      { q: '¿Qué indica un titular sensacionalista?', options: ['Alta fiabilidad','Posible manipulación','Fuentes académicas','Nada relevante'], correctIndex: 1 },
+      { q: '¿Qué herramienta ayuda a verificar imágenes?', options: ['Búsqueda inversa','Calculadora','Editor de texto','Reproductor'], correctIndex: 0 },
+      { q: '¿La fecha de una noticia es importante?', options: ['No','Sí','Solo en verano','Solo en redes'], correctIndex: 1 },
+
+      { q: '¿Qué es ciberbullying?', options: ['Un juego','Acoso en línea','Una red social','Una app'], correctIndex: 1 },
+      { q: '¿Debes compartir información sin verificar?', options: ['Sí','No','Solo con amigos','Solo en privado'], correctIndex: 1 },
+      { q: '¿Qué hacer si dudas de una noticia?', options: ['Contactar a un experto','Publicar sin pensar','Ignorar a todos','Calcular shares'], correctIndex: 0 },
+
+      { q: '¿Qué significa "verificar varias fuentes"?', options: ['Leer solo un sitio','Comparar varias fuentes confiables','Borrar historial','Hacer un meme'], correctIndex: 1 },
+      { q: '¿Cuál es una señal de posible fake news?', options: ['Cita a expertos','Titular exagerado','Referencias académicas','Datos estadísticos'], correctIndex: 1 },
+      { q: '¿Dónde puedes reportar ciberbullying?', options: ['A la plataforma','A un amigo','Al azar','A una canción'], correctIndex: 0 }
+    ];
+
+    // Estado del examen
+    const evalState = {
+      page: 0,
+      answers: Array(12).fill(null),
+      correctCount: 0
+    };
+
+    const questionsContainer = document.getElementById('questionsContainer');
+    const evalPageInfo = document.getElementById('evalPageInfo');
+    const prevEvalBtn = document.getElementById('prevEvalBtn');
+    const nextEvalBtn = document.getElementById('nextEvalBtn');
+    const evalResult = document.getElementById('evalResult');
+
+    function renderEvalPage(){
+      const page = evalState.page;
+      const perPage = 3;
+      const start = page * perPage;
+      const end = start + perPage;
+      questionsContainer.innerHTML = '';
+      for(let i=start;i<end;i++){
+        const q = questions[i];
+        const wrapper = document.createElement('div');
+        wrapper.className = 'question';
+        const qIndex = i;
+        wrapper.innerHTML = `<div style="font-weight:700">Pregunta ${i+1}</div><div style="margin-top:8px">${q.q}</div>`;
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'options';
+        q.options.forEach((opt, idx)=>{
+          const id = `ev_q${qIndex}_opt${idx}`;
+          const label = document.createElement('label');
+          label.innerHTML = `<input type="radio" name="ev_q${qIndex}" value="${idx}" id="${id}"> ${opt}`;
+          optionsDiv.appendChild(label);
+        });
+        wrapper.appendChild(optionsDiv);
+        questionsContainer.appendChild(wrapper);
+
+        const existing = evalState.answers[qIndex];
+        if(existing !== null && existing !== undefined){
+          const radio = wrapper.querySelector(`input[value="${existing}"]`);
+          if(radio) radio.checked = true;
+        }
+      }
+
+      evalPageInfo.textContent = `Página ${page+1} / ${Math.ceil(questions.length / 3)}`;
+      prevEvalBtn.disabled = page === 0;
+      checkEvalPageAnswered();
+    }
+
+    function checkEvalPageAnswered(){
+      const page = evalState.page;
+      const perPage = 3;
+      const start = page * perPage;
+      const end = start + perPage;
+      let allAnswered = true;
+      for(let i=start;i<end;i++){
+        const selected = document.querySelector(`input[name="ev_q${i}"]:checked`);
+        if(!selected) { allAnswered = false; break; }
+      }
+      nextEvalBtn.disabled = !allAnswered;
+    }
+
+    questionsContainer.addEventListener('change', (e)=>{
+      if(!e.target.name) return;
+      const qIndex = parseInt(e.target.name.replace('ev_q',''));
+      const val = parseInt(e.target.value);
+      evalState.answers[qIndex] = val;
+      checkEvalPageAnswered();
+    });
+
+    prevEvalBtn.addEventListener('click', ()=>{
+      if(evalState.page > 0){
+        evalState.page--;
+        renderEvalPage();
+      }
+    });
+
+    nextEvalBtn.addEventListener('click', ()=>{
+      const perPage = 3;
+      // move forward if not last page
+      if(evalState.page < Math.ceil(questions.length / perPage) - 1){
+        evalState.page++;
+        renderEvalPage();
+      }
+
+      // check if all answered -> compute result
+      const allAnswered = evalState.answers.every(a => a !== null && a !== undefined);
+      if(allAnswered){
+        let correct = 0;
+        for(let i=0;i<questions.length;i++){
+          if(evalState.answers[i] === questions[i].correctIndex) correct++;
+        }
+        evalState.correctCount = correct;
+        evalResult.innerHTML = `<div class="card"><strong>Evaluación finalizada.</strong><div class="muted" style="margin-top:6px">Respuestas correctas: ${correct} / ${questions.length}</div></div>`;
+
+        // Si alcanzó >=8 habilitar opción 3
+        if(correct >= 8){
+          menuItems.comments.classList.remove('disabled');
+          document.getElementById('statusComments').textContent = '●';
+          alert('Has obtenido ' + correct + ' respuestas correctas. "Comentarios y recomendaciones" está habilitado.');
+        } else {
+          // no habilitar y avisar
+          alert('Resultado: ' + correct + '. No alcanzaste 8 respuestas correctas; la opción de comentarios permanece deshabilitada.');
+        }
+      }
+    });
+
+    // inicializar examen
+    renderEvalPage();
+
+    /***********************
+     * Opción 3: comentarios (guardar simulado)
+     ***********************/
+    const saveCommentsBtn = document.getElementById('saveCommentsBtn');
+    const saveCommentsMsg = document.getElementById('saveCommentsMsg');
+    saveCommentsBtn.addEventListener('click', ()=>{
+      const comentarios = document.getElementById('comentarios').value.trim();
+      const recomendaciones = document.getElementById('recomendaciones').value.trim();
+      // acción simulada
+      saveCommentsMsg.textContent = 'Guardado (simulado).';
+      setTimeout(()=> saveCommentsMsg.textContent = '', 2200);
+    });
+
+    /***********************
+     * Seguridad: evitar atajos globales que interfieran con escritura
+     ***********************/
+    document.addEventListener('keydown', (e) => {
+      const active = document.activeElement;
+      const tag = active && active.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || active?.isContentEditable) return;
+      // No definimos atajos aquí (evitamos interferencias)
+    });
+  </script>
+</body>
+</html>
