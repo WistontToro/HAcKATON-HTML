@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Panel Estudiante — Conciencia Digital</title>
+  <meta name="description" content="Panel para estudiantes — Conciencia Digital">
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+  <!-- Styles específicos para este dashboard (mantienen estética existente) -->
+  <style>
+    /* Layout principal */
+    .dashboard-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}
+    .header-left{display:flex;align-items:center;gap:12px}
+    .profile-dropdown{position:relative}
+    .profile-btn{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:10px;padding:6px 10px;cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
+    .profile-menu{position:absolute;top:calc(100% + 8px);left:0;background:var(--card);border-radius:10px;padding:8px;box-shadow:0 12px 28px rgba(2,6,12,0.6);display:none;min-width:180px;z-index:30}
+    .profile-menu a{display:block;padding:8px;border-radius:8px;color:var(--muted);text-decoration:none}
+    .profile-menu a:hover{background:rgba(255,255,255,0.02);color:var(--text)}
+
+    .header-actions{display:flex;align-items:center;gap:10px}
+    .icon-btn{background:var(--card);border-radius:10px;padding:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.03);display:inline-flex;align-items:center;gap:8px}
+    .icon-btn .count-badge{background:#ffb4b4;color:#042027;padding:2px 6px;border-radius:12px;font-size:12px;margin-left:6px}
+
+    .dashboard-main{display:flex;gap:18px;margin-top:18px}
+    .left-panel{width:300px;background:var(--card);padding:16px;border-radius:12px}
+    .content-panel{flex:1;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px}
+
+    .menu-item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;cursor:pointer;background:var(--glass);margin-bottom:10px;border:1px solid transparent}
+    .menu-item.disabled{opacity:0.45;cursor:not-allowed}
+    .menu-item.active{box-shadow:0 10px 30px rgba(2,6,12,0.45);border-color:rgba(255,255,255,0.03)}
+    .menu-item h4{margin:0}
+    .menu-item p{margin:0;font-size:13px;color:var(--muted)}
+
+    /* content sections */
+    .section{display:none}
+    .section.active{display:block}
+
+    /* video container */
+    .video-wrap{position:relative;padding-top:56.25%;overflow:hidden;border-radius:8px;background:#000}
+    .video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+
+    /* exam */
+    .question{padding:12px;border-radius:8px;background:var(--card);margin-bottom:10px}
+    .options label{display:block;margin-bottom:6px;cursor:pointer}
+    .pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+
+    /* task */
+    .task-right-counter{position:absolute;right:24px;top:140px;background:var(--card);padding:14px;border-radius:10px;min-width:120px;text-align:center;box-shadow:0 8px 24px rgba(2,6,12,0.45)}
+    /* responsive */
+    @media (max-width:980px){
+      .dashboard-main{flex-direction:column}
+      .left-panel{width:100%}
+      .task-right-counter{position:static;margin-top:12px}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="dashboard-header" role="banner">
+      <div class="header-left">
+        <!-- Logo (igual al index) -->
+        <div class="brand" aria-hidden="false">
+          <div class="logo" aria-hidden="true">CD</div>
+          <div class="brand-text" style="margin-left:8px">
+            <strong>Conciencia Digital</strong><br>
+            <small class="muted">Panel Estudiante</small>
+          </div>
+        </div>
+
+        <!-- Profile dropdown -->
+        <div class="profile-dropdown" id="profileDropdown">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false">
+            <div style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700">E</div>
+            <div>
+              <div style="font-weight:700">Estudiante</div>
+              <div class="muted" style="font-size:12px">curso: 11°</div>
+            </div>
+            <div style="margin-left:8px;color:var(--muted)">▾</div>
+          </button>
+
+          <div class="profile-menu" id="profileMenu" role="menu" aria-hidden="true">
+            <a href="#" role="menuitem">Cuenta</a>
+            <a href="#" role="menuitem">Perfil</a>
+            <a href="#" role="menuitem">Configuraciones</a>
+            <a href="#" role="menuitem">Cerrar sesión</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions" aria-hidden="false">
+        <button class="icon-btn" id="helpBtn" title="Ayuda">❓ Ayuda</button>
+        <button class="icon-btn" id="notifBtn" title="Notificaciones">🔔 <span class="count-badge" id="notifCount">3</span></button>
+        <button class="icon-btn" id="statsBtn" title="Estadísticas">📊 Estadísticas</button>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <div class="dashboard-main" role="main">
+      <!-- Left: opciones -->
+      <aside class="left-panel" aria-label="Opciones">
+        <div style="font-weight:700;margin-bottom:10px">Actividades</div>
+
+        <div id="menuLesson" class="menu-item active" data-section="lesson" tabindex="0">
+          <div>
+            <h4>Lección</h4>
+            <p class="muted">Lee el texto de concientización</p>
+          </div>
+          <div id="statusLesson">●</div>
+        </div>
+
+        <div id="menuVideo" class="menu-item disabled" data-section="video" tabindex="0">
+          <div>
+            <h4>Video</h4>
+            <p class="muted">Mira el video completo</p>
+          </div>
+          <div id="statusVideo">●</div>
+        </div>
+
+        <div id="menuExam" class="menu-item disabled" data-section="exam" tabindex="0">
+          <div>
+            <h4>Examen</h4>
+            <p class="muted">12 preguntas (mínimo 8 correctas para avanzar)</p>
+          </div>
+          <div id="statusExam">●</div>
+        </div>
+
+        <div id="menuTask" class="menu-item disabled" data-section="task" tabindex="0">
+          <div>
+            <h4>Tarea</h4>
+            <p class="muted">Envía evidencias (2 fotos)</p>
+          </div>
+          <div id="statusTask">●</div>
+        </div>
+      </aside>
+
+      <!-- Right: visualización -->
+      <section class="content-panel" aria-live="polite">
+        <!-- LECCIÓN -->
+        <div id="lesson" class="section active">
+          <h2>Lección: Cómo identificar noticias falsas</h2>
+          <p class="muted">Autor: Equipo Conciencia Digital</p>
+          <article style="margin-top:12px;line-height:1.6">
+            <p><strong>Resumen:</strong> Las noticias falsas (fake news) son informaciones creadas para engañar o manipular. Para identificarlas verifica la fuente, busca la confirmación en otros medios confiables, revisa la fecha, sospecha de titulares sensacionalistas y consulta expertos. Educar a tu entorno significa compartir información verificada y enseñar a cuestionar fuentes.</p>
+            <p>Consejos prácticos: comprueba la URL, investiga al autor, revisa si otras páginas confiables informan lo mismo, evita compartir inmediatamente y usa herramientas de verificación.</p>
+          </article>
+
+          <div style="margin-top:18px;display:flex;gap:10px;align-items:center">
+            <button id="markReadBtn" class="btn primary">Marcar como leído</button>
+            <div id="lessonMsg" class="muted" style="margin-left:8px"></div>
+          </div>
+        </div>
+
+        <!-- VIDEO -->
+        <div id="video" class="section">
+          <h2>Video de concientización</h2>
+          <p class="muted">Ver el video completo para desbloquear el examen.</p>
+          <div style="margin-top:12px" id="videoWrap">
+            <div class="video-wrap" id="playerWrap">
+              <!-- IFrame se insertará dinámicamente -->
+              <div id="player"></div>
+            </div>
+          </div>
+          <div style="margin-top:12px">
+            <span id="videoStatus" class="muted">Estado: no visto</span>
+          </div>
+        </div>
+
+        <!-- EXAMEN -->
+        <div id="exam" class="section">
+          <h2>Examen</h2>
+          <p class="muted">Responde las preguntas por página (3 por página). Debes responder todas para avanzar en la página.</p>
+
+          <div id="examArea" style="margin-top:12px">
+            <!-- preguntas renderizadas aquí -->
+            <div id="questionsContainer"></div>
+
+            <div class="pager">
+              <div class="muted" id="examPageInfo">Página 1 / 4</div>
+              <div>
+                <button id="prevPageBtn" class="btn secondary" disabled>Anterior</button>
+                <button id="nextPageBtn" class="btn primary" disabled>Siguiente</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="examResult" style="margin-top:12px"></div>
+        </div>
+
+        <!-- TAREA -->
+        <div id="task" class="section">
+          <h2>Subir evidencia</h2>
+          <p class="muted">Introduce el código del evaluado y, si coincide, podrás subir dos fotos como evidencia.</p>
+
+          <div style="display:flex;gap:18px;align-items:flex-start">
+            <div style="flex:1">
+              <div class="field-group">
+                <label for="codeEval">Código del evaluado</label>
+                <input id="codeEval" type="text" placeholder="Código asignado">
+              </div>
+
+              <div id="fileArea" style="display:none;margin-top:12px">
+                <div class="field-group">
+                  <label>Foto 1</label>
+                  <input id="photo1" type="file" accept="image/*">
+                </div>
+                <div class="field-group">
+                  <label>Foto 2</label>
+                  <input id="photo2" type="file" accept="image/*">
+                </div>
+                <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+                  <button id="savePhotosBtn" class="btn primary" disabled>Guardar evidencias</button>
+                  <!-- Botón "Revisar evidencia" añadido (por ahora sin funcionalidad) -->
+                  <button id="reviewEvidenceBtn" class="btn secondary" title="Revisar evidencia">Revisar evidencia</button>
+                </div>
+              </div>
+
+              <div id="taskMsg" class="form-message" style="margin-top:12px"></div>
+            </div>
+
+            <!-- contador derecho -->
+            <div class="task-right-counter" aria-hidden="true">
+              <div style="font-weight:700">Contador</div>
+              <div class="muted" style="margin-top:8px" id="counterValue">0</div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+  <!-- YouTube IFrame API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <script>
+    /***********************
+     * Estado y utilidades
+     ***********************/
+    const state = {
+      lessonRead: false,
+      videoWatched: false,
+      exam: {
+        page: 0,
+        answers: Array(12).fill(null),
+        correctCount: 0
+      },
+      task: {
+        allowed: false
+      }
+    };
+
+    // For testing: only this code will be accepted
+    const validEvaluadoCodes = ['556633'];
+
+    /***********************
+     * Header / profile dropdown
+     ***********************/
+    const profileBtn = document.getElementById('profileBtn');
+    const profileMenu = document.getElementById('profileMenu');
+    profileBtn.addEventListener('click', (e) => {
+      const expanded = profileBtn.getAttribute('aria-expanded') === 'true';
+      profileBtn.setAttribute('aria-expanded', String(!expanded));
+      profileMenu.style.display = expanded ? 'none' : 'block';
+      profileMenu.setAttribute('aria-hidden', expanded ? 'true' : 'false');
+    });
+    // click fuera para cerrar
+    document.addEventListener('click', (e) => {
+      if(!profileBtn.contains(e.target) && !profileMenu.contains(e.target)){
+        profileMenu.style.display = 'none';
+        profileBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    /***********************
+     * Menu izquierdo: navegación entre secciones
+     ***********************/
+    const menuItems = {
+      lesson: document.getElementById('menuLesson'),
+      video: document.getElementById('menuVideo'),
+      exam: document.getElementById('menuExam'),
+      task: document.getElementById('menuTask')
+    };
+    const sections = {
+      lesson: document.getElementById('lesson'),
+      video: document.getElementById('video'),
+      exam: document.getElementById('exam'),
+      task: document.getElementById('task')
+    };
+
+    // utility: show section if allowed
+    function canAccess(section){
+      if(section === 'video') return state.lessonRead;
+      if(section === 'exam') return state.lessonRead && state.videoWatched;
+      if(section === 'task') return (state.lessonRead && state.videoWatched && state.exam.correctCount >= 8);
+      return true; // lesson always allowed
+    }
+
+    function updateMenuState(){
+      // update disabled/class based on state
+      menuItems.video.classList.toggle('disabled', !canAccess('video'));
+      menuItems.exam.classList.toggle('disabled', !canAccess('exam'));
+      menuItems.task.classList.toggle('disabled', !canAccess('task'));
+
+      // statuses
+      document.getElementById('statusLesson').textContent = state.lessonRead ? '✓' : '●';
+      document.getElementById('statusVideo').textContent = state.videoWatched ? '✓' : '●';
+      document.getElementById('statusExam').textContent = (state.exam.correctCount >= 8) ? (state.exam.correctCount + '✓') : (state.exam.correctCount ? state.exam.correctCount : '●');
+      document.getElementById('statusTask').textContent = state.task.allowed ? '✓' : '●';
+    }
+
+    function showSection(name){
+      // if not allowed, show small hint and abort
+      if(!canAccess(name)){
+        alert('No puedes acceder a "'+ name +'" aún. Completa las actividades previas.');
+        return;
+      }
+      // deactivate menu items
+      Object.values(menuItems).forEach(mi => mi.classList.remove('active'));
+      menuItems[name].classList.add('active');
+
+      // switch content
+      Object.values(sections).forEach(s => s.classList.remove('active'));
+      sections[name].classList.add('active');
+
+      // if opening exam, render questions page
+      if(name === 'exam') renderExamPage();
+    }
+
+    // attach clicks
+    Object.entries(menuItems).forEach(([name, el])=>{
+      el.addEventListener('click', ()=> showSection(name));
+      el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') showSection(name); });
+    });
+
+    /***********************
+     * LECCIÓN
+     ***********************/
+    const markReadBtn = document.getElementById('markReadBtn');
+    const lessonMsg = document.getElementById('lessonMsg');
+    markReadBtn.addEventListener('click', ()=>{
+      state.lessonRead = true;
+      lessonMsg.textContent = 'Lección completada. Ahora puedes acceder al video.';
+      updateMenuState();
+    });
+
+    /***********************
+     * VIDEO (YouTube IFrame API)
+     ***********************/
+    // Video ID from provided short link: https://youtu.be/Uum1-KLFbis -> ID = Uum1-KLFbis
+    const YT_VIDEO_ID = 'Uum1-KLFbis';
+    let player;
+    function onYouTubeIframeAPIReady(){
+      player = new YT.Player('player', {
+        height: '360',
+        width: '640',
+        videoId: YT_VIDEO_ID,
+        playerVars: { 'playsinline': 1 },
+        events: {
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+    function onPlayerStateChange(event){
+      // 0 = ended
+      if(event.data === 0){
+        state.videoWatched = true;
+        document.getElementById('videoStatus').textContent = 'Estado: visto (completo).';
+        updateMenuState();
+        alert('Has visto el video completo. El examen ahora está desbloqueado.');
+      }
+      if(event.data === 1){
+        document.getElementById('videoStatus').textContent = 'Estado: reproduciendo...';
+      }
+      if(event.data === 2){
+        document.getElementById('videoStatus').textContent = 'Estado: pausado';
+      }
+    }
+
+    /***********************
+     * EXAMEN
+     ***********************/
+    // 12 preguntas de ejemplo (aleatorias). Each: {q, options:[], correctIndex}
+    const questions = [
+      { q: '¿Qué es una noticia falsa?', options: ['Información verificada','Información creada para engañar','Un artículo científico','Una reseña'], correctIndex: 1 },
+      { q: '¿Qué debes revisar para verificar una fuente?', options: ['URL','Hora del día','Color de la web','Tipo de letra'], correctIndex: 0 },
+      { q: '¿Qué acción es recomendable antes de compartir una noticia?', options: ['Compartir rápido','Verificar en otras fuentes','Ignorar todo','Copiar y pegar'], correctIndex: 1 },
+
+      { q: '¿Qué indica un titular sensacionalista?', options: ['Alta fiabilidad','Posible manipulación','Fuentes académicas','Nada relevante'], correctIndex: 1 },
+      { q: '¿Qué herramienta ayuda a verificar imágenes?', options: ['Búsqueda inversa','Calculadora','Editor de texto','Reproductor'], correctIndex: 0 },
+      { q: '¿La fecha de una noticia es importante?', options: ['No','Sí','Solo en verano','Solo en redes'], correctIndex: 1 },
+
+      { q: '¿Qué es ciberbullying?', options: ['Un juego','Acoso en línea','Una red social','Una app'], correctIndex: 1 },
+      { q: '¿Debes compartir información sin verificar?', options: ['Sí','No','Solo con amigos','Solo en privado'], correctIndex: 1 },
+      { q: '¿Qué hacer si dudas de una noticia?', options: ['Contactar a un experto','Publicar sin pensar','Ignorar a todos','Calcular shares'], correctIndex: 0 },
+
+      { q: '¿Qué significa "verificar varias fuentes"?', options: ['Leer solo un sitio','Comparar varias fuentes confiables','Borrar historial','Hacer un meme'], correctIndex: 1 },
+      { q: '¿Cuál es una señal de posible fake news?', options: ['Cita a expertos','Titular exagerado','Referencias académicas','Datos estadísticos'], correctIndex: 1 },
+      { q: '¿Dónde puedes reportar ciberbullying?', options: ['A la plataforma','A un amigo','Al azar','A una canción'], correctIndex: 0 }
+    ];
+
+    const questionsContainer = document.getElementById('questionsContainer');
+    const examPageInfo = document.getElementById('examPageInfo');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const examResult = document.getElementById('examResult');
+
+    function renderExamPage(){
+      const page = state.exam.page;
+      const perPage = 3;
+      const start = page * perPage;
+      const end = start + perPage;
+      questionsContainer.innerHTML = '';
+      for(let i=start;i<end;i++){
+        const q = questions[i];
+        const wrapper = document.createElement('div');
+        wrapper.className = 'question';
+        const qIndex = i;
+        wrapper.innerHTML = `<div style="font-weight:700">Pregunta ${i+1}</div><div style="margin-top:8px">${q.q}</div>`;
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'options';
+        q.options.forEach((opt, idx)=>{
+          const id = `q${qIndex}_opt${idx}`;
+          const label = document.createElement('label');
+          label.innerHTML = `<input type="radio" name="q${qIndex}" value="${idx}" id="${id}"> ${opt}`;
+          optionsDiv.appendChild(label);
+        });
+        wrapper.appendChild(optionsDiv);
+        questionsContainer.appendChild(wrapper);
+
+        // if there is already an answer, mark it
+        const existing = state.exam.answers[qIndex];
+        if(existing !== null && existing !== undefined){
+          const radio = wrapper.querySelector(`input[value="${existing}"]`);
+          if(radio) radio.checked = true;
+        }
+      }
+
+      examPageInfo.textContent = `Página ${page+1} / ${Math.ceil(questions.length / 3)}`;
+
+      // Enable/disable prev/next buttons
+      prevPageBtn.disabled = page === 0;
+      // nextPageBtn enabled only if all three answered
+      checkPageAnswered();
+    }
+
+    function checkPageAnswered(){
+      const page = state.exam.page;
+      const perPage = 3;
+      const start = page * perPage;
+      const end = start + perPage;
+      let allAnswered = true;
+      for(let i=start;i<end;i++){
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if(!selected) { allAnswered = false; break; }
+      }
+      nextPageBtn.disabled = !allAnswered;
+    }
+
+    // listen for option changes to update state
+    questionsContainer.addEventListener('change', (e)=>{
+      if(!e.target.name) return;
+      const qIndex = parseInt(e.target.name.replace('q',''));
+      const val = parseInt(e.target.value);
+      state.exam.answers[qIndex] = val;
+      // re-check page validity
+      checkPageAnswered();
+    });
+
+    prevPageBtn.addEventListener('click', ()=>{
+      if(state.exam.page > 0) {
+        state.exam.page--;
+        renderExamPage();
+      }
+    });
+
+    nextPageBtn.addEventListener('click', ()=>{
+      const perPage = 3;
+      const page = state.exam.page;
+      const start = page * perPage;
+      const end = start + perPage;
+
+      // move to next if not last page
+      if(state.exam.page < Math.ceil(questions.length / perPage) - 1){
+        state.exam.page++;
+        renderExamPage();
+      }
+
+      // If all answered after any move, compute results and apply logic
+      const answeredAll = state.exam.answers.every(a => a !== null && a !== undefined);
+      if(answeredAll){
+        let correct = 0;
+        for(let i=0;i<questions.length;i++){
+          if(state.exam.answers[i] === questions[i].correctIndex) correct++;
+        }
+        state.exam.correctCount = correct;
+        examResult.innerHTML = `<div class="card"><strong>Has respondido todas las preguntas.</strong><div class="muted" style="margin-top:6px">Respuestas correctas: ${correct} / ${questions.length}</div></div>`;
+
+        if(correct >= 8){
+          alert('Has alcanzado al menos 8 respuestas correctas. La Tarea está desbloqueada.');
+          state.task.allowed = true;
+          updateMenuState();
+        } else {
+          alert('No alcanzaste el mínimo de 8 respuestas correctas. Se reiniciará el flujo (volverás a la Lección).');
+          state.lessonRead = false;
+          state.videoWatched = false;
+          state.exam.answers = Array(12).fill(null);
+          state.exam.page = 0;
+          state.exam.correctCount = 0;
+          state.task.allowed = false;
+          updateMenuState();
+          showSection('lesson');
+          return;
+        }
+      }
+      updateMenuState();
+    });
+
+    /***********************
+     * TASK (tarea)
+     ***********************/
+    const codeInput = document.getElementById('codeEval');
+    const fileArea = document.getElementById('fileArea');
+    const photo1 = document.getElementById('photo1');
+    const photo2 = document.getElementById('photo2');
+    const savePhotosBtn = document.getElementById('savePhotosBtn');
+    const taskMsg = document.getElementById('taskMsg');
+    const counterValueEl = document.getElementById('counterValue');
+    const reviewEvidenceBtn = document.getElementById('reviewEvidenceBtn');
+
+    codeInput.addEventListener('input', ()=>{
+      const code = codeInput.value.trim();
+      if(validEvaluadoCodes.includes(code)){
+        fileArea.style.display = 'block';
+        taskMsg.textContent = 'Código válido. Puedes subir las fotos.';
+        // enable the button if files already selected
+        savePhotosBtn.disabled = !(photo1.files.length && photo2.files.length);
+      } else {
+        fileArea.style.display = 'none';
+        savePhotosBtn.disabled = true;
+        taskMsg.textContent = code ? 'Código no reconocido.' : '';
+      }
+    });
+
+    // Enable save button only when both files chosen
+    function checkFilesSelected(){
+      savePhotosBtn.disabled = !(photo1.files.length && photo2.files.length);
+    }
+    photo1.addEventListener('change', checkFilesSelected);
+    photo2.addEventListener('change', checkFilesSelected);
+
+    savePhotosBtn.addEventListener('click', ()=>{
+      // Simula recibir archivos y luego eliminar (no upload real)
+      if(!photo1.files.length || !photo2.files.length){
+        taskMsg.textContent = 'Selecciona ambas fotos antes de guardar.';
+        taskMsg.classList.add('error');
+        return;
+      }
+      // Simulate processing
+      taskMsg.textContent = 'Guardando evidencias...';
+      setTimeout(()=>{
+        taskMsg.textContent = 'Evidencias guardadas (simulado). Los archivos han sido eliminados del cliente.';
+        // clear inputs to simulate deletion
+        photo1.value = '';
+        photo2.value = '';
+        savePhotosBtn.disabled = true;
+
+        // increment counter by 1
+        const current = parseInt(counterValueEl.textContent || '0', 10);
+        counterValueEl.textContent = String(current + 1);
+
+        // enable "Revisar evidencia" button (no functionality for now)
+        reviewEvidenceBtn.disabled = false;
+      }, 900);
+    });
+
+    /***********************
+     * Inicialización
+     ***********************/
+    // render first exam page at load (in case user opens exam)
+    renderExamPage();
+    updateMenuState();
+
+    // Small accessibility: keyboard shortcuts for menu (1..4)
+    // UPDATED: ignore keystrokes when focus is in an input/textarea/contenteditable
+    document.addEventListener('keydown', (e) => {
+      // Ignorar si el foco está en un input, textarea o elemento editable
+      const active = document.activeElement;
+      const tag = active && active.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || active?.isContentEditable) return;
+
+      // Ignorar si se presionan modificadores (Ctrl/Alt/Meta)
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+      // Atajos globales (solo cuando no hay foco en un campo)
+      if (e.key === '1') showSection('lesson');
+      if (e.key === '2') showSection('video');
+      if (e.key === '3') showSection('exam');
+      if (e.key === '4') showSection('task');
+    });
+
+    /***********************
+     * Nota: si quieres forzar desbloqueos en pruebas
+     * puedes ejecutar en la consola:
+     * state.lessonRead = true; state.videoWatched = true; updateMenuState();
+     ***********************/
+  </script>
+</body>
+</html>
