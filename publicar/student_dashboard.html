@@ -121,7 +121,7 @@
         <div id="menuExam" class="menu-item disabled" data-section="exam" tabindex="0">
           <div>
             <h4>Examen</h4>
-            <p class="muted">12 preguntas (mínimo 8 correctas para avanzar)</p>
+            <p class="muted">3 preguntas (mínimo 2 correctas para avanzar)</p>
           </div>
           <div id="statusExam">●</div>
         </div>
@@ -139,11 +139,12 @@
       <section class="content-panel" aria-live="polite">
         <!-- LECCIÓN -->
         <div id="lesson" class="section active">
-          <h2>Lección: Cómo identificar noticias falsas</h2>
-          <p class="muted">Autor: Equipo Conciencia Digital</p>
+          <h2>Salud mental en el uso de las TIC</h2>
+          <p class="muted">Autor: RUCTIC Conciencia Digital</p>
           <article style="margin-top:12px;line-height:1.6">
-            <p><strong>Resumen:</strong> Las noticias falsas (fake news) son informaciones creadas para engañar o manipular. Para identificarlas verifica la fuente, busca la confirmación en otros medios confiables, revisa la fecha, sospecha de titulares sensacionalistas y consulta expertos. Educar a tu entorno significa compartir información verificada y enseñar a cuestionar fuentes.</p>
-            <p>Consejos prácticos: comprueba la URL, investiga al autor, revisa si otras páginas confiables informan lo mismo, evita compartir inmediatamente y usa herramientas de verificación.</p>
+            <p><strong>Lección:</strong> La salud mental digital hace referencia a la manera en que el uso de la tecnología afecta nuestro bienestar emocional, social y físico. Hoy, pasamos varias horas frente a pantallas: navegando en redes, estudiando, trabajando o entreteniéndonos. El reto está en usar la tecnología de forma consciente y equilibrada, para que se convierta en una aliada y no en un factor de desgaste.</p>
+            <p><strong>Objetivo de aprendizaje:</strong> al finalizar este módulo, reconocerás la importancia de cuidar tu salud mental en el uso de las TIC e identificarás tres prácticas simples para mantener un equilibrio digital en tu vida diaria.</p>
+            <p><strong>Texto explicativo: </strong>La salud mental digital nos invita a reflexionar sobre cómo la tecnología influye en nuestra mente y emociones. Investigaciones recientes muestran que el uso excesivo de redes sociales se asocia con mayor ansiedad y menor calidad de sueño. Sin embargo, la solución no es desconectarse por completo, sino aprender a <strong> el tiempo en pantalla, cuidar los hábitos de descanso y relacionarnos de manera positiva en el mundo digital.</strong><br> Practicar pequeñas acciones —como establecer horarios de desconexión, evitar pantallas antes de dormir y elegir interacciones constructivas en redes— puede marcar la diferencia en nuestra salud mental.</p>
           </article>
 
           <div style="margin-top:18px;display:flex;gap:10px;align-items:center">
@@ -170,7 +171,7 @@
         <!-- EXAMEN -->
         <div id="exam" class="section">
           <h2>Examen</h2>
-          <p class="muted">Responde las preguntas por página (3 por página). Debes responder todas para avanzar en la página.</p>
+          <p class="muted">Responde las preguntas una por una. Debes responder cada pregunta para avanzar.</p>
 
           <div id="examArea" style="margin-top:12px">
             <!-- preguntas renderizadas aquí -->
@@ -243,7 +244,7 @@
       videoWatched: false,
       exam: {
         page: 0,
-        answers: Array(12).fill(null),
+        answers: Array(3).fill(null),
         correctCount: 0
       },
       task: {
@@ -293,7 +294,7 @@
     function canAccess(section){
       if(section === 'video') return state.lessonRead;
       if(section === 'exam') return state.lessonRead && state.videoWatched;
-      if(section === 'task') return (state.lessonRead && state.videoWatched && state.exam.correctCount >= 8);
+      if(section === 'task') return (state.lessonRead && state.videoWatched && state.exam.correctCount >= 2);
       return true; // lesson always allowed
     }
 
@@ -306,7 +307,7 @@
       // statuses
       document.getElementById('statusLesson').textContent = state.lessonRead ? '✓' : '●';
       document.getElementById('statusVideo').textContent = state.videoWatched ? '✓' : '●';
-      document.getElementById('statusExam').textContent = (state.exam.correctCount >= 8) ? (state.exam.correctCount + '✓') : (state.exam.correctCount ? state.exam.correctCount : '●');
+      document.getElementById('statusExam').textContent = (state.exam.correctCount >= 2) ? (state.exam.correctCount + '✓') : (state.exam.correctCount ? state.exam.correctCount : '●');
       document.getElementById('statusTask').textContent = state.task.allowed ? '✓' : '●';
     }
 
@@ -349,7 +350,7 @@
      * VIDEO (YouTube IFrame API)
      ***********************/
     // Video ID from provided short link: https://youtu.be/Uum1-KLFbis -> ID = Uum1-KLFbis
-    const YT_VIDEO_ID = 'Uum1-KLFbis';
+    const YT_VIDEO_ID = 'DcdhJahVwyc';
     let player;
     function onYouTubeIframeAPIReady(){
       player = new YT.Player('player', {
@@ -381,24 +382,36 @@
     /***********************
      * EXAMEN
      ***********************/
-    // 12 preguntas de ejemplo (aleatorias). Each: {q, options:[], correctIndex}
-    const questions = [
-      { q: '¿Qué es una noticia falsa?', options: ['Información verificada','Información creada para engañar','Un artículo científico','Una reseña'], correctIndex: 1 },
-      { q: '¿Qué debes revisar para verificar una fuente?', options: ['URL','Hora del día','Color de la web','Tipo de letra'], correctIndex: 0 },
-      { q: '¿Qué acción es recomendable antes de compartir una noticia?', options: ['Compartir rápido','Verificar en otras fuentes','Ignorar todo','Copiar y pegar'], correctIndex: 1 },
-
-      { q: '¿Qué indica un titular sensacionalista?', options: ['Alta fiabilidad','Posible manipulación','Fuentes académicas','Nada relevante'], correctIndex: 1 },
-      { q: '¿Qué herramienta ayuda a verificar imágenes?', options: ['Búsqueda inversa','Calculadora','Editor de texto','Reproductor'], correctIndex: 0 },
-      { q: '¿La fecha de una noticia es importante?', options: ['No','Sí','Solo en verano','Solo en redes'], correctIndex: 1 },
-
-      { q: '¿Qué es ciberbullying?', options: ['Un juego','Acoso en línea','Una red social','Una app'], correctIndex: 1 },
-      { q: '¿Debes compartir información sin verificar?', options: ['Sí','No','Solo con amigos','Solo en privado'], correctIndex: 1 },
-      { q: '¿Qué hacer si dudas de una noticia?', options: ['Contactar a un experto','Publicar sin pensar','Ignorar a todos','Calcular shares'], correctIndex: 0 },
-
-      { q: '¿Qué significa "verificar varias fuentes"?', options: ['Leer solo un sitio','Comparar varias fuentes confiables','Borrar historial','Hacer un meme'], correctIndex: 1 },
-      { q: '¿Cuál es una señal de posible fake news?', options: ['Cita a expertos','Titular exagerado','Referencias académicas','Datos estadísticos'], correctIndex: 1 },
-      { q: '¿Dónde puedes reportar ciberbullying?', options: ['A la plataforma','A un amigo','Al azar','A una canción'], correctIndex: 0 }
-    ];
+// 3 preguntas sobre salud mental digital. Each: {q, options:[], correctIndex}
+const questions = [
+  { 
+    q: '¿Qué es la salud mental digital?', 
+    options: [
+      'La desconexión total de la tecnología',
+      'El impacto de la tecnología en nuestras emociones y mente',
+      'El uso de redes sociales únicamente para estudiar'
+    ], 
+    correctIndex: 1 
+  },
+  { 
+    q: '¿Cuál de estas es una práctica saludable?', 
+    options: [
+      'Dormir con el celular en la mano',
+      'Hacer pausas de descanso cada hora frente a la pantalla',
+      'Compararte con otros en redes sociales'
+    ], 
+    correctIndex: 1 
+  },
+  { 
+    q: '¿Por qué no se recomienda usar pantallas antes de dormir?', 
+    options: [
+      'Porque gasta datos móviles',
+      'Porque disminuye la calidad del sueño',
+      'Porque evita que uses redes sociales'
+    ], 
+    correctIndex: 1 
+  }
+];
 
     const questionsContainer = document.getElementById('questionsContainer');
     const examPageInfo = document.getElementById('examPageInfo');
@@ -408,7 +421,7 @@
 
     function renderExamPage(){
       const page = state.exam.page;
-      const perPage = 3;
+      const perPage = 1;
       const start = page * perPage;
       const end = start + perPage;
       questionsContainer.innerHTML = '';
@@ -437,7 +450,7 @@
         }
       }
 
-      examPageInfo.textContent = `Página ${page+1} / ${Math.ceil(questions.length / 3)}`;
+      examPageInfo.textContent = `Página ${page+1} / ${Math.ceil(questions.length / 1)}`;
 
       // Enable/disable prev/next buttons
       prevPageBtn.disabled = page === 0;
@@ -447,7 +460,7 @@
 
     function checkPageAnswered(){
       const page = state.exam.page;
-      const perPage = 3;
+      const perPage = 1; // Una pregunta por página
       const start = page * perPage;
       const end = start + perPage;
       let allAnswered = true;
@@ -476,7 +489,7 @@
     });
 
     nextPageBtn.addEventListener('click', ()=>{
-      const perPage = 3;
+      const perPage = 1;
       const page = state.exam.page;
       const start = page * perPage;
       const end = start + perPage;
@@ -497,15 +510,15 @@
         state.exam.correctCount = correct;
         examResult.innerHTML = `<div class="card"><strong>Has respondido todas las preguntas.</strong><div class="muted" style="margin-top:6px">Respuestas correctas: ${correct} / ${questions.length}</div></div>`;
 
-        if(correct >= 8){
-          alert('Has alcanzado al menos 8 respuestas correctas. La Tarea está desbloqueada.');
+        if(correct >= 2){
+          alert('Has alcanzado al menos 2 respuestas correctas. La Tarea está desbloqueada.');
           state.task.allowed = true;
           updateMenuState();
         } else {
-          alert('No alcanzaste el mínimo de 8 respuestas correctas. Se reiniciará el flujo (volverás a la Lección).');
+          alert('No alcanzaste el mínimo de 2 respuestas correctas de 3. Se reiniciará el flujo (volverás a la Lección).');
           state.lessonRead = false;
           state.videoWatched = false;
-          state.exam.answers = Array(12).fill(null);
+          state.exam.answers = Array(3).fill(null);
           state.exam.page = 0;
           state.exam.correctCount = 0;
           state.task.allowed = false;
