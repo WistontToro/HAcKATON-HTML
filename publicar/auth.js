@@ -37,52 +37,49 @@ form.addEventListener('submit', async e => {
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) return showError(error.message);
 
-    showSuccess('Inicio correcto. Redirigiendo…');
-    setTimeout(() => window.location.href = 'index.html', 1000);
-  } catch {
-    showError('Error al conectar con el servidor.');
+    // Verificar el rol del usuario
+    const user = data.user;
+    const userId = user.id;
+
+    // Consultar perfil en la tabla profiles
+    const { data: profile, error: profileError } = await sb
+      .from('profiles')
+      .select('rol')
+      .eq('id', userId)
+      .single();
+
+    if (profileError) {
+      showError('Error al consultar rol del usuario');
+      return;
+    }
+
+    const userRole = profile.rol;
+    localStorage.setItem('userRole', userRole);
+
+    if (userRole === 'estudiante') {
+      showSuccess('Inicio correcto. Redirigiendo…');
+      setTimeout(() => window.location.href = 'student_dashboard.html', 1000);
+    } else if (userRole === 'supervisor') {
+      showSuccess('Inicio correcto. Redirigiendo…');
+      setTimeout(() => window.location.href = 'supervisor_dashboard.html', 1000);
+    } else if (userRole === 'evaluado') {
+      showSuccess('Inicio correcto. Redirigiendo…');
+      setTimeout(() => window.location.href = 'evaluado_dashboard.html', 1000);
+    } else {
+      showError('Rol de usuario no reconocido');
+    }
+  } catch (error) {
+    showError('Error al conectar con el servidor: ' + error.message);
   }
 });
 
 function showError(text) {
   msg.textContent = text;
+  msg.classList.remove('success');
   msg.classList.add('error');
 }
 function showSuccess(text) {
   msg.textContent = text;
+  msg.classList.remove('error');
   msg.classList.add('success');
-}
-
-const user = data.user; // tras el login
-const userId = user.id;
-
-// Consultar perfil en la tabla profiles:
-const { data: profile, error: profileError } = await sb
-  .from('profiles')
-  .select('rol')
-  .eq('id', userId)
-  .single();
-
-if (profileError) {
-  showError('Error al consultar rol del usuario');
-  return;
-}
-
-const userRole = profile.rol;
-localStorage.setItem('userRole', userRole);
-
-if (userRole === 'estudiante') {
-  window.location.href = 'student_dashboard.html';
-} else if (userRole === 'supervisor') {
-  window.location.href = 'supervisor_dashboard.html';
-} else if (userRole === 'evaluado') {
-  window.location.href = 'evaluado_dashboard.html';
-} else {
-  window.location.href = 'index.html'; // por defecto
-}
-
-// Al inicio de student_dashboard.html
-const role = localStorage.getItem('userRole');
-if (role !== 'estudiante') {
-  window.location.href = 'login.html';
 }
