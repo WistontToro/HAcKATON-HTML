@@ -125,105 +125,111 @@
     </footer>
   </div>
 
-  <!-- Scripts -->
+  <!-- Scripts: primero supabase, luego auth.js (helpers), luego script del registro -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
   <script>
-    const SUPABASE_URL = 'https://gpgxaeynjsvovdzyppoo.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_HuchtYI9DCe9M70OqefGIg_LM9UDoZm';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Registro: usa createProfileForUser desde auth.js
+    document.addEventListener('DOMContentLoaded', () => {
+      const selectInst = document.getElementById('institucion');
+      const instOtra = document.getElementById('institucion-otra');
+      const form = document.getElementById('registerForm');
+      const msg = document.getElementById('formMessage');
 
-    // Mostrar / ocultar input "Otra institución"
-    const selectInst = document.getElementById('institucion');
-    const instOtra = document.getElementById('institucion-otra');
-    selectInst.addEventListener('change', (e) => {
-      if (e.target.value === 'Otra') {
-        instOtra.classList.remove('hidden');
-        instOtra.required = true;
-        instOtra.focus();
-      } else {
-        instOtra.classList.add('hidden');
-        instOtra.required = false;
-        instOtra.value = '';
+      function showError(text){ if(msg){ msg.textContent = text; msg.classList.add('error'); } else alert(text); }
+      function showSuccess(text){ if(msg){ msg.textContent = text; msg.classList.add('success'); } else console.log(text); }
+      function validateEmail(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+
+      // Mostrar / ocultar input "Otra institución"
+      if(selectInst){
+        selectInst.addEventListener('change', (e) => {
+          if (e.target.value === 'Otra') {
+            instOtra.classList.remove('hidden');
+            instOtra.required = true;
+            instOtra.focus();
+          } else {
+            instOtra.classList.add('hidden');
+            instOtra.required = false;
+            instOtra.value = '';
+          }
+        });
       }
-    });
 
-    // Toggle mostrar contraseña
-    document.querySelectorAll('.show-pass').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const input = btn.parentElement.querySelector('input');
-        if (!input) return;
-        input.type = input.type === 'password' ? 'text' : 'password';
-        btn.textContent = input.type === 'password' ? '👁️' : '🙈';
-      });
-    });
+      // Manejo submit
+      if(!form) return;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if(msg){ msg.textContent = ''; msg.className = 'form-message'; }
 
-    // Validaciones y envío real a Supabase
-    const form = document.getElementById('registerForm');
-    const msg = document.getElementById('formMessage');
+        const fd = new FormData(form);
+        const numero_id = (fd.get('numero_id') || '').trim();
+        const role = fd.get('role');
+        const institucion = (fd.get('institucion') === 'Otra' ? fd.get('institucion-otra') : fd.get('institucion')) || '';
+        const grado = (fd.get('grado') || '').trim();
+        const nombre = (fd.get('nombre') || '').trim();
+        const apellidos = (fd.get('apellidos') || '').trim();
+        const email = (fd.get('email') || '').trim();
+        const password = fd.get('password') || '';
+        const passwordConfirm = fd.get('passwordConfirm') || '';
+        const terms = document.getElementById('terms').checked;
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      msg.textContent = ''; msg.className = 'form-message';
+        if (!numero_id) return showError('Ingresa tu número de identificación.');
+        if (!role) return showError('Selecciona un rol.');
+        if (!institucion) return showError('Selecciona o especifica tu institución.');
+        if (!grado) return showError('Ingresa tu grado o nivel.');
+        if (!nombre || !apellidos) return showError('Completa tu nombre y apellidos.');
+        if (!email || !validateEmail(email)) return showError('Ingresa un correo válido.');
+        if (!password || password.length < 8) return showError('La contraseña debe tener al menos 8 caracteres.');
+        if (password !== passwordConfirm) return showError('Las contraseñas no coinciden.');
+        if (!terms) return showError('Debes aceptar la Política de privacidad y los Términos.');
 
-      const fd = new FormData(form);
-      const numero_id = fd.get('numero_id').trim();
-      const role = fd.get('role');
-      const institucion = fd.get('institucion') === 'Otra' ? fd.get('institucion-otra') : fd.get('institucion');
-      const grado = fd.get('grado');
-      const nombre = fd.get('nombre');
-      const apellidos = fd.get('apellidos');
-      const email = fd.get('email');
-      const password = fd.get('password');
-      const passwordConfirm = fd.get('passwordConfirm');
-      const terms = document.getElementById('terms').checked;
+        try {
+          // 1. Crear usuario en Auth
+          const { data, error } = await sb.auth.signUp({ email, password });
+          if (error) {
+            console.error('signUp error', error);
+            return showError(error.message || 'Error registrando usuario.');
+          }
+          const user = data?.user;
+          if(!user) {
+            console.error('No se recibió user en signUp', data);
+            return showError('No se pudo crear el usuario. Revisa la consola.');
+          }
 
-      if (!numero_id) return showError('Ingresa tu número de identificación.');
-      if (!role) return showError('Selecciona un rol.');
-      if (!institucion) return showError('Selecciona o especifica tu institución.');
-      if (!grado) return showError('Ingresa tu grado o nivel.');
-      if (!nombre || !apellidos) return showError('Completa tu nombre y apellidos.');
-      if (!email || !validateEmail(email)) return showError('Ingresa un correo válido.');
-      if (!password || password.length < 8) return showError('La contraseña debe tener al menos 8 caracteres.');
-      if (password !== passwordConfirm) return showError('Las contraseñas no coinciden.');
-      if (!terms) return showError('Debes aceptar la Política de privacidad y los Términos.');
+          // 2. determinamos id_est_ev por rol
+          let id_est_ev = null;
+          if (role === 'estudiante') id_est_ev = '0000000000';
+          else if (role === 'supervisor') id_est_ev = '1111111111';
 
-      try {
-        // 1. Crear usuario en Auth
-        const { data, error } = await sb.auth.signUp({ email, password });
-        if(error) return showError(error.message);
-
-        const user = data.user;
-
-        // 2. Insertar en tabla profiles
-        const { error: profileError } = await sb
-          .from('profiles')
-          .insert({
-            id: user.id,
+          // 3. construimos objeto del perfil. Nota: usa "numero_id" (campo del formulario).
+          // Si quieres que "id_participantes" sea el mismo que numero_id, añádelo aquí.
+          const profileData = {
             numero_id,
             nombre,
             apellidos,
             rol: role,
             institucion,
-            grado
-          });
+            grado,
+            id_est_ev
+          };
 
-        if(profileError) {
-          console.error(profileError);
-          return showError('Error guardando tu perfil.');
+          // 4. crear perfil con helper de auth.js
+          try {
+            await createProfileForUser(user.id, profileData);
+          } catch (err) {
+            console.error('Profile creation error', err);
+            return showError('Error guardando tu perfil. Revisa la consola.');
+          }
+
+          showSuccess('Registro correcto. Ahora puedes iniciar sesión.');
+          setTimeout(()=> window.location.href = 'login.html', 1300);
+
+        } catch(err) {
+          console.error('Error (registro):', err);
+          showError('Error al conectar con el servidor.');
         }
-
-        showSuccess('Registro correcto. Ahora puedes iniciar sesión.');
-        setTimeout(()=> window.location.href = 'login.html', 1500);
-
-      } catch(err) {
-        console.error(err);
-        showError('Error al conectar con el servidor.');
-      }
+      });
     });
-
-    function showError(text){ msg.textContent = text; msg.classList.add('error'); }
-    function showSuccess(text){ msg.textContent = text; msg.classList.add('success'); }
-    function validateEmail(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
   </script>
 </body>
 </html>

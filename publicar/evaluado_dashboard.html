@@ -123,12 +123,12 @@
         <!-- Opción 1: Estudiante encargado -->
         <div id="student" class="section active">
           <h2>Estudiante a cargo</h2>
-          <p class="muted">Ingresa el código del estudiante a cargo para ver su nombre y colegio (demo).</p>
+          <p class="muted">Ingresa el código del estudiante a cargo (10 dígitos) para ver su nombre e institución.</p>
 
           <div style="max-width:560px;margin-top:12px">
             <div class="field-group">
               <label for="studentCode">Código del estudiante</label>
-              <input id="studentCode" type="text" placeholder="Código asignado al estudiante">
+              <input id="studentCode" type="text" placeholder="Código asignado al estudiante (10 dígitos)">
             </div>
             <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
               <button id="validateStudentBtn" class="btn primary">Validar</button>
@@ -185,36 +185,12 @@
     </div>
   </div>
 
+  <!-- Scripts: supabase, auth.js, luego este script -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
   <script>
     /***********************
-     * Datos de ejemplo (simulada "base de datos" de estudiantes)
-     ***********************/
-    const studentsDB = {
-      'STU001': { nombre: 'María Pérez', colegio: 'Colegio Nacional' },
-      'STU002': { nombre: 'Juan Gómez', colegio: 'Institución Educativa Técnica' },
-      '556633': { nombre: 'Wiston Toro', colegio: 'Institución Demo' }
-    };
-
-    /***********************
-     * Header / profile dropdown
-     ***********************/
-    const profileBtn = document.getElementById('profileBtn');
-    const profileMenu = document.getElementById('profileMenu');
-    profileBtn.addEventListener('click', () => {
-      const expanded = profileBtn.getAttribute('aria-expanded') === 'true';
-      profileBtn.setAttribute('aria-expanded', String(!expanded));
-      profileMenu.style.display = expanded ? 'none' : 'block';
-      profileMenu.setAttribute('aria-hidden', expanded ? 'true' : 'false');
-    });
-    document.addEventListener('click', (e) => {
-      if(!profileBtn.contains(e.target) && !profileMenu.contains(e.target)){
-        profileMenu.style.display = 'none';
-        profileBtn.setAttribute('aria-expanded', 'false');
-      }
-    });
-
-    /***********************
-     * Navegación entre secciones (bloquear si disabled)
+     * Navegación entre secciones
      ***********************/
     const menuItems = {
       student: document.getElementById('menuStudent'),
@@ -250,28 +226,63 @@
     });
 
     /***********************
-     * Opción 1: validar código de estudiante
+     * Opción 1: validar código de estudiante (usa helpers de auth.js)
      ***********************/
     const studentCodeInput = document.getElementById('studentCode');
     const validateStudentBtn = document.getElementById('validateStudentBtn');
     const clearStudentBtn = document.getElementById('clearStudentBtn');
     const studentInfo = document.getElementById('studentInfo');
 
-    validateStudentBtn.addEventListener('click', ()=>{
+    validateStudentBtn.addEventListener('click', async () => {
       const code = (studentCodeInput.value || '').trim();
       studentInfo.textContent = '';
-      if(!code){
-        studentInfo.innerHTML = '<div class="form-message error">Ingresa un código.</div>';
+
+      // validar formato: exactamente 10 dígitos
+      if (!/^\d{10}$/.test(code)) {
+        studentInfo.innerHTML = '<div class="form-message error">Ingresa un código válido de 10 dígitos.</div>';
         return;
       }
-      const found = studentsDB[code];
-      if(found){
-        studentInfo.innerHTML = `<div class="card" style="padding:12px;border-radius:8px"><strong>${found.nombre}</strong><div class="muted" style="margin-top:6px">${found.colegio}</div></div>`;
+
+      try {
+        // buscar estudiante por id_participantes (helper)
+        const resp = await getProfileByIdParticipantes(code);
+        if (!resp || resp.error) {
+          console.error('Error en consulta getProfileByIdParticipantes:', resp && resp.error);
+          studentInfo.innerHTML = '<div class="form-message error">Error en la búsqueda. Revisa la consola.</div>';
+          return;
+        }
+        if (!resp.data) {
+          studentInfo.innerHTML = '<div class="form-message error">Código no encontrado.</div>';
+          return;
+        }
+
+        const student = resp.data; // { id, id_participantes, nombre, institucion }
+
+        // obtener usuario actual (evaluado)
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+          studentInfo.innerHTML = '<div class="form-message error">No hay sesión activa. Inicia sesión nuevamente.</div>';
+          return;
+        }
+
+        // actualizar id_est_ev del evaluado con el código del estudiante
+        await setIdEstEvForEvaluado(currentUser.id, code);
+
+        // mostrar info del estudiante en la UI
+        studentInfo.innerHTML = `<div class="card" style="padding:12px;border-radius:8px">
+          <strong>${student.nombre}</strong>
+          <div class="muted" style="margin-top:6px">${student.institucion || 'Institución no disponible'}</div>
+          <div class="muted" style="margin-top:6px">Código estudiante: <span style="font-family:monospace;color:#4CAF50">${student.id_participantes}</span></div>
+        </div>`;
+
+        // Habilitar evaluación
         menuItems.evaluation.classList.remove('disabled');
         document.getElementById('statusStudent').textContent = '✓';
         document.getElementById('statusEval').textContent = '●';
-      } else {
-        studentInfo.innerHTML = '<div class="form-message error">Código no encontrado.</div>';
+
+      } catch (err) {
+        console.error('Error validando estudiante:', err);
+        studentInfo.innerHTML = '<div class="form-message error">Error del servidor al validar. Revisa la consola.</div>';
       }
     });
 
@@ -286,45 +297,15 @@
     });
 
     /***********************
-     * Opción 2: evaluación (con el examen del estudiante)
+     * Opción 2: evaluación (sin cambios funcionales)
      ***********************/
     const questions = [
-      { 
-        q: '¿Qué es la salud mental digital?', 
-        options: [
-          'La desconexión total de la tecnología',
-          'El impacto de la tecnología en nuestras emociones y mente',
-          'El uso de redes sociales únicamente para estudiar'
-        ], 
-        correctIndex: 1 
-      },
-      { 
-        q: '¿Cuál de estas es una práctica saludable?', 
-        options: [
-          'Dormir con el celular en la mano',
-          'Hacer pausas de descanso cada hora frente a la pantalla',
-          'Compararte con otros en redes sociales'
-        ], 
-        correctIndex: 1 
-      },
-      { 
-        q: '¿Por qué no se recomienda usar pantallas antes de dormir?', 
-        options: [
-          'Porque gasta datos móviles',
-          'Porque disminuye la calidad del sueño',
-          'Porque evita que uses redes sociales'
-        ], 
-        correctIndex: 1 
-      }
+      { q: '¿Qué es la salud mental digital?', options: ['La desconexión total de la tecnología','El impacto de la tecnología en nuestras emociones y mente','El uso de redes sociales únicamente para estudiar'], correctIndex: 1 },
+      { q: '¿Cuál de estas es una práctica saludable?', options: ['Dormir con el celular en la mano','Hacer pausas de descanso cada hora frente a la pantalla','Compararte con otros en redes sociales'], correctIndex: 1 },
+      { q: '¿Por qué no se recomienda usar pantallas antes de dormir?', options: ['Porque gasta datos móviles','Porque disminuye la calidad del sueño','Porque evita que uses redes sociales'], correctIndex: 1 }
     ];
 
-    // Estado del examen
-    const evalState = {
-      page: 0,
-      answers: Array(3).fill(null),
-      correctCount: 0
-    };
-
+    const evalState = { page: 0, answers: Array(3).fill(null), correctCount: 0 };
     const questionsContainer = document.getElementById('questionsContainer');
     const evalPageInfo = document.getElementById('evalPageInfo');
     const prevEvalBtn = document.getElementById('prevEvalBtn');
@@ -424,42 +405,71 @@
     renderEvalPage();
 
     /***********************
-     * Opción 3: comentarios (guardar simulado)
+     * Opción 3: comentarios (guardar en BD)
      ***********************/
     const saveCommentsBtn = document.getElementById('saveCommentsBtn');
     const saveCommentsMsg = document.getElementById('saveCommentsMsg');
-    saveCommentsBtn.addEventListener('click', ()=>{
+    saveCommentsBtn.addEventListener('click', async () => {
       const comentarios = document.getElementById('comentarios').value.trim();
       const recomendaciones = document.getElementById('recomendaciones').value.trim();
-      saveCommentsMsg.textContent = 'Guardado (simulado).';
-      setTimeout(()=> saveCommentsMsg.textContent = '', 2200);
+      saveCommentsMsg.textContent = 'Guardando...';
+
+      try {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+          saveCommentsMsg.textContent = 'No hay sesión activa. Inicia sesión.';
+          return;
+        }
+
+        await updateComentariosRecomendaciones(currentUser.id, comentarios, recomendaciones);
+        saveCommentsMsg.textContent = 'Comentarios guardados.';
+        setTimeout(()=> saveCommentsMsg.textContent = '', 2200);
+      } catch (err) {
+        console.error('Error guardando comentarios:', err);
+        saveCommentsMsg.textContent = 'Error al guardar comentarios. Revisa la consola.';
+      }
     });
 
     /***********************
-     * Mostrar nombre, grado e ID del evaluado
+     * Mostrar nombre, grado e ID del evaluado (localStorage si está)
      ***********************/
-    document.addEventListener('DOMContentLoaded', () => {
-      const userName = localStorage.getItem('userName');
-      const userCode = localStorage.getItem('userIdParticipantes');
-      const userRole = localStorage.getItem('userRole');
-
+    document.addEventListener('DOMContentLoaded', async () => {
       const nameDisplay = document.getElementById('userNameDisplay');
       const codeDisplay = document.getElementById('userCodeDisplay');
       const gradeDisplay = document.getElementById('userGradeDisplay');
 
-      if (nameDisplay && userName) {
-        nameDisplay.textContent = userName;
+      // Preferimos cargar desde la sesión activa (getCurrentUser -> perfil)
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          // intentar leer perfil para mostrar nombre y id_participantes si existe
+          const { data: profile, error } = await sb.from('profiles').select('nombre, rol, id_participantes, grado').eq('id', currentUser.id).single();
+          if (!error && profile) {
+            if (nameDisplay) nameDisplay.textContent = profile.nombre || 'Evaluado';
+            if (codeDisplay) {
+              codeDisplay.textContent = profile.id_participantes ? `ID: ${profile.id_participantes}` : 'ID: no disponible';
+              codeDisplay.style.fontFamily = 'monospace';
+              codeDisplay.style.color = '#4CAF50';
+            }
+            if (gradeDisplay && profile.rol === 'evaluado') gradeDisplay.textContent = `Grado: ${profile.grado || 'Visitante'}`;
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('No se pudo cargar perfil al inicio:', err);
       }
 
+      // Fallback: usar localStorage si existe
+      const userName = localStorage.getItem('userName');
+      const userCode = localStorage.getItem('userIdParticipantes');
+      const userRole = localStorage.getItem('userRole');
+      if (nameDisplay && userName) nameDisplay.textContent = userName;
       if (codeDisplay && userCode) {
         codeDisplay.textContent = `ID: ${userCode}`;
         codeDisplay.style.fontFamily = 'monospace';
         codeDisplay.style.color = '#4CAF50';
       }
-
-      if (gradeDisplay && userRole === 'evaluado') {
-        gradeDisplay.textContent = 'Grado: Visitante';
-      }
+      if (gradeDisplay && userRole === 'evaluado') gradeDisplay.textContent = 'Grado: Visitante';
     });
   </script>
 </body>
