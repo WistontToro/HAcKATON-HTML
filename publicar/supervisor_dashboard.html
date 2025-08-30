@@ -72,8 +72,9 @@
           <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false">
             <div style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700">S</div>
             <div>
-              <div style="font-weight:700">Supervisor</div>
+              <div style="font-weight:700" id="userNameDisplay">Supervisor</div>
               <div class="muted" style="font-size:12px">Equipo</div>
+              <div class="muted" style="font-size:12px" id="userCodeDisplay">ID: no disponible</div>
             </div>
             <div style="margin-left:8px;color:var(--muted)">▾</div>
           </button>
@@ -547,6 +548,32 @@
      ***********************/
     window.addEventListener('beforeunload', ()=> {
       clearAllIntervals();
+    });
+
+    /***********************
+     * Mostrar nombre e ID del supervisor
+     ***********************/
+    document.addEventListener('DOMContentLoaded', () => {
+      const userName = localStorage.getItem('userName');
+      const userCode = localStorage.getItem('userIdParticipantes');
+
+      const nameDisplay = document.getElementById('userNameDisplay');
+      const codeDisplay = document.getElementById('userCodeDisplay');
+
+      if (nameDisplay && userName) {
+        nameDisplay.textContent = userName;
+      }
+
+      if (codeDisplay) {
+        if (userCode) {
+          codeDisplay.textContent = `ID: ${userCode}`;
+          codeDisplay.style.fontFamily = 'monospace';
+          codeDisplay.style.color = '#4CAF50';
+        } else {
+          codeDisplay.textContent = 'ID: no disponible';
+          console.warn('No se encontró userIdParticipantes en localStorage');
+        }
+      }
     });
   </script>
 </body>

@@ -62,8 +62,9 @@
           <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false">
             <div style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700">V</div>
             <div>
-              <div style="font-weight:700">Evaluado</div>
-              <div class="muted" style="font-size:12px">Visitante</div>
+              <div style="font-weight:700" id="userNameDisplay">Evaluado</div>
+              <div class="muted" style="font-size:12px" id="userGradeDisplay">Grado: no disponible</div>
+              <div class="muted" style="font-size:12px" id="userCodeDisplay">ID: no disponible</div>
             </div>
             <div style="margin-left:8px;color:var(--muted)">▾</div>
           </button>
@@ -111,7 +112,7 @@
         <div id="menuComments" class="menu-item disabled" data-section="comments" tabindex="0">
           <div>
             <h4>Comentarios y recomendaciones</h4>
-            <p class="muted">Se habilita si la evaluación >= 8</p>
+            <p class="muted">Se habilita si la evaluación >= 2</p>
           </div>
           <div id="statusComments">●</div>
         </div>
@@ -138,16 +139,16 @@
           </div>
         </div>
 
-        <!-- Opción 2: Evaluación (mismo examen) -->
+        <!-- Opción 2: Evaluación (ahora con el examen del estudiante) -->
         <div id="evaluation" class="section">
           <h2>Evaluación</h2>
-          <p class="muted">Responde el examen (12 preguntas, 3 por página). Debes contestar las 3 preguntas de cada página para avanzar.</p>
+          <p class="muted">Responde el examen sobre salud mental digital (3 preguntas). Debes contestar cada pregunta para avanzar.</p>
 
           <div id="evalArea" style="margin-top:12px;max-width:900px">
             <div id="questionsContainer"></div>
 
             <div class="pager" style="margin-top:12px">
-              <div class="muted" id="evalPageInfo">Página 1 / 4</div>
+              <div class="muted" id="evalPageInfo">Página 1 / 3</div>
               <div>
                 <button id="prevEvalBtn" class="btn secondary" disabled>Anterior</button>
                 <button id="nextEvalBtn" class="btn primary" disabled>Siguiente</button>
@@ -191,7 +192,6 @@
     const studentsDB = {
       'STU001': { nombre: 'María Pérez', colegio: 'Colegio Nacional' },
       'STU002': { nombre: 'Juan Gómez', colegio: 'Institución Educativa Técnica' },
-      // el código de prueba solicitado (activo)
       '556633': { nombre: 'Wiston Toro', colegio: 'Institución Demo' }
     };
 
@@ -256,12 +256,10 @@
     const validateStudentBtn = document.getElementById('validateStudentBtn');
     const clearStudentBtn = document.getElementById('clearStudentBtn');
     const studentInfo = document.getElementById('studentInfo');
-    const menuEval = document.getElementById('menuEval');
 
     validateStudentBtn.addEventListener('click', ()=>{
       const code = (studentCodeInput.value || '').trim();
       studentInfo.textContent = '';
-      // reset evaluation & comments availability if code changed
       if(!code){
         studentInfo.innerHTML = '<div class="form-message error">Ingresa un código.</div>';
         return;
@@ -269,53 +267,61 @@
       const found = studentsDB[code];
       if(found){
         studentInfo.innerHTML = `<div class="card" style="padding:12px;border-radius:8px"><strong>${found.nombre}</strong><div class="muted" style="margin-top:6px">${found.colegio}</div></div>`;
-        // habilitar evaluación
-        menuEval.classList.remove('disabled');
+        menuItems.evaluation.classList.remove('disabled');
         document.getElementById('statusStudent').textContent = '✓';
         document.getElementById('statusEval').textContent = '●';
       } else {
         studentInfo.innerHTML = '<div class="form-message error">Código no encontrado.</div>';
-        // keep evaluation disabled
       }
     });
 
     clearStudentBtn.addEventListener('click', ()=>{
       studentCodeInput.value = '';
       studentInfo.textContent = '';
-      // disable evaluation & comments again
-      menuEval.classList.add('disabled');
+      menuItems.evaluation.classList.add('disabled');
+      menuItems.comments.classList.add('disabled');
       document.getElementById('statusStudent').textContent = '●';
       document.getElementById('statusEval').textContent = '●';
-      // Also disable comments
-      menuItems.comments.classList.add('disabled');
       document.getElementById('statusComments').textContent = '●';
     });
 
     /***********************
-     * Opción 2: examen (idéntico al del estudiante)
+     * Opción 2: evaluación (con el examen del estudiante)
      ***********************/
     const questions = [
-      { q: '¿Qué es una noticia falsa?', options: ['Información verificada','Información creada para engañar','Un artículo científico','Una reseña'], correctIndex: 1 },
-      { q: '¿Qué debes revisar para verificar una fuente?', options: ['URL','Hora del día','Color de la web','Tipo de letra'], correctIndex: 0 },
-      { q: '¿Qué acción es recomendable antes de compartir una noticia?', options: ['Compartir rápido','Verificar en otras fuentes','Ignorar todo','Copiar y pegar'], correctIndex: 1 },
-
-      { q: '¿Qué indica un titular sensacionalista?', options: ['Alta fiabilidad','Posible manipulación','Fuentes académicas','Nada relevante'], correctIndex: 1 },
-      { q: '¿Qué herramienta ayuda a verificar imágenes?', options: ['Búsqueda inversa','Calculadora','Editor de texto','Reproductor'], correctIndex: 0 },
-      { q: '¿La fecha de una noticia es importante?', options: ['No','Sí','Solo en verano','Solo en redes'], correctIndex: 1 },
-
-      { q: '¿Qué es ciberbullying?', options: ['Un juego','Acoso en línea','Una red social','Una app'], correctIndex: 1 },
-      { q: '¿Debes compartir información sin verificar?', options: ['Sí','No','Solo con amigos','Solo en privado'], correctIndex: 1 },
-      { q: '¿Qué hacer si dudas de una noticia?', options: ['Contactar a un experto','Publicar sin pensar','Ignorar a todos','Calcular shares'], correctIndex: 0 },
-
-      { q: '¿Qué significa "verificar varias fuentes"?', options: ['Leer solo un sitio','Comparar varias fuentes confiables','Borrar historial','Hacer un meme'], correctIndex: 1 },
-      { q: '¿Cuál es una señal de posible fake news?', options: ['Cita a expertos','Titular exagerado','Referencias académicas','Datos estadísticos'], correctIndex: 1 },
-      { q: '¿Dónde puedes reportar ciberbullying?', options: ['A la plataforma','A un amigo','Al azar','A una canción'], correctIndex: 0 }
+      { 
+        q: '¿Qué es la salud mental digital?', 
+        options: [
+          'La desconexión total de la tecnología',
+          'El impacto de la tecnología en nuestras emociones y mente',
+          'El uso de redes sociales únicamente para estudiar'
+        ], 
+        correctIndex: 1 
+      },
+      { 
+        q: '¿Cuál de estas es una práctica saludable?', 
+        options: [
+          'Dormir con el celular en la mano',
+          'Hacer pausas de descanso cada hora frente a la pantalla',
+          'Compararte con otros en redes sociales'
+        ], 
+        correctIndex: 1 
+      },
+      { 
+        q: '¿Por qué no se recomienda usar pantallas antes de dormir?', 
+        options: [
+          'Porque gasta datos móviles',
+          'Porque disminuye la calidad del sueño',
+          'Porque evita que uses redes sociales'
+        ], 
+        correctIndex: 1 
+      }
     ];
 
     // Estado del examen
     const evalState = {
       page: 0,
-      answers: Array(12).fill(null),
+      answers: Array(3).fill(null),
       correctCount: 0
     };
 
@@ -327,7 +333,7 @@
 
     function renderEvalPage(){
       const page = evalState.page;
-      const perPage = 3;
+      const perPage = 1;
       const start = page * perPage;
       const end = start + perPage;
       questionsContainer.innerHTML = '';
@@ -355,14 +361,14 @@
         }
       }
 
-      evalPageInfo.textContent = `Página ${page+1} / ${Math.ceil(questions.length / 3)}`;
+      evalPageInfo.textContent = `Página ${page+1} / ${questions.length}`;
       prevEvalBtn.disabled = page === 0;
       checkEvalPageAnswered();
     }
 
     function checkEvalPageAnswered(){
       const page = evalState.page;
-      const perPage = 3;
+      const perPage = 1;
       const start = page * perPage;
       const end = start + perPage;
       let allAnswered = true;
@@ -389,14 +395,12 @@
     });
 
     nextEvalBtn.addEventListener('click', ()=>{
-      const perPage = 3;
-      // move forward if not last page
-      if(evalState.page < Math.ceil(questions.length / perPage) - 1){
+      const perPage = 1;
+      if(evalState.page < questions.length - 1){
         evalState.page++;
         renderEvalPage();
       }
 
-      // check if all answered -> compute result
       const allAnswered = evalState.answers.every(a => a !== null && a !== undefined);
       if(allAnswered){
         let correct = 0;
@@ -406,14 +410,12 @@
         evalState.correctCount = correct;
         evalResult.innerHTML = `<div class="card"><strong>Evaluación finalizada.</strong><div class="muted" style="margin-top:6px">Respuestas correctas: ${correct} / ${questions.length}</div></div>`;
 
-        // Si alcanzó >=8 habilitar opción 3
-        if(correct >= 8){
+        if(correct >= 2){
           menuItems.comments.classList.remove('disabled');
           document.getElementById('statusComments').textContent = '●';
-          alert('Has obtenido ' + correct + ' respuestas correctas. "Comentarios y recomendaciones" está habilitado.');
+          alert('¡Bien hecho! Has obtenido ' + correct + ' respuestas correctas. "Comentarios y recomendaciones" está habilitado.');
         } else {
-          // no habilitar y avisar
-          alert('Resultado: ' + correct + '. No alcanzaste 8 respuestas correctas; la opción de comentarios permanece deshabilitada.');
+          alert('Resultado: ' + correct + '/3. No alcanzaste 2 respuestas correctas. Comentarios permanece deshabilitado.');
         }
       }
     });
@@ -429,19 +431,35 @@
     saveCommentsBtn.addEventListener('click', ()=>{
       const comentarios = document.getElementById('comentarios').value.trim();
       const recomendaciones = document.getElementById('recomendaciones').value.trim();
-      // acción simulada
       saveCommentsMsg.textContent = 'Guardado (simulado).';
       setTimeout(()=> saveCommentsMsg.textContent = '', 2200);
     });
 
     /***********************
-     * Seguridad: evitar atajos globales que interfieran con escritura
+     * Mostrar nombre, grado e ID del evaluado
      ***********************/
-    document.addEventListener('keydown', (e) => {
-      const active = document.activeElement;
-      const tag = active && active.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || active?.isContentEditable) return;
-      // No definimos atajos aquí (evitamos interferencias)
+    document.addEventListener('DOMContentLoaded', () => {
+      const userName = localStorage.getItem('userName');
+      const userCode = localStorage.getItem('userIdParticipantes');
+      const userRole = localStorage.getItem('userRole');
+
+      const nameDisplay = document.getElementById('userNameDisplay');
+      const codeDisplay = document.getElementById('userCodeDisplay');
+      const gradeDisplay = document.getElementById('userGradeDisplay');
+
+      if (nameDisplay && userName) {
+        nameDisplay.textContent = userName;
+      }
+
+      if (codeDisplay && userCode) {
+        codeDisplay.textContent = `ID: ${userCode}`;
+        codeDisplay.style.fontFamily = 'monospace';
+        codeDisplay.style.color = '#4CAF50';
+      }
+
+      if (gradeDisplay && userRole === 'evaluado') {
+        gradeDisplay.textContent = 'Grado: Visitante';
+      }
     });
   </script>
 </body>

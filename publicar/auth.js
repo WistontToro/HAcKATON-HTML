@@ -34,50 +34,62 @@ form.addEventListener('submit', async e => {
   }
 
   try {
+    // 1. Iniciar sesión con correo y contraseña
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) return showError(error.message);
+    if (error) throw error;
 
-    // Verificar el rol del usuario
     const user = data.user;
-    const userId = user.id;
 
-    // Consultar perfil en la tabla profiles
+    // 2. Consultar perfil: rol e id_participantes desde la tabla 'profiles'
     const { data: profile, error: profileError } = await sb
       .from('profiles')
-      .select('rol')
-      .eq('id', userId)
+      .select('rol, id_participantes, nombre')
+      .eq('id', user.id)
       .single();
 
     if (profileError) {
-      showError('Error al consultar rol del usuario');
-      return;
+      console.error('Error al obtener perfil:', profileError);
+      return showError('No se pudo cargar tu perfil. Contacta al administrador.');
     }
 
-    const userRole = profile.rol;
-    localStorage.setItem('userRole', userRole);
-
-    if (userRole === 'estudiante') {
-      showSuccess('Inicio correcto. Redirigiendo…');
-      setTimeout(() => window.location.href = 'student_dashboard.html', 1000);
-    } else if (userRole === 'supervisor') {
-      showSuccess('Inicio correcto. Redirigiendo…');
-      setTimeout(() => window.location.href = 'supervisor_dashboard.html', 1000);
-    } else if (userRole === 'evaluado') {
-      showSuccess('Inicio correcto. Redirigiendo…');
-      setTimeout(() => window.location.href = 'evaluado_dashboard.html', 1000);
-    } else {
-      showError('Rol de usuario no reconocido');
+    if (!profile) {
+      return showError('Perfil no encontrado.');
     }
+
+    // 3. Guardar datos del usuario en localStorage
+    localStorage.setItem('userRole', profile.rol);
+    localStorage.setItem('userIdParticipantes', profile.id_participantes);
+    localStorage.setItem('userName', profile.nombre || 'Usuario');
+
+    // 4. Mostrar mensaje de éxito y redirigir
+    showSuccess('Inicio de sesión correcto. Redirigiendo…');
+
+    // 5. Redirigir según el rol
+    setTimeout(() => {
+      if (profile.rol === 'estudiante') {
+        window.location.href = 'student_dashboard.html';
+      } else if (profile.rol === 'supervisor') {
+        window.location.href = 'supervisor_dashboard.html';
+      } else if (profile.rol === 'evaluado') {
+        window.location.href = 'evaluado_dashboard.html';
+      } else {
+        showError('Rol no reconocido en el sistema.');
+      }
+    }, 1200);
+
   } catch (error) {
-    showError('Error al conectar con el servidor: ' + error.message);
+    console.error('Error de autenticación:', error);
+    showError(`Error: ${error.message}`);
   }
 });
 
+// Funciones para mostrar mensajes
 function showError(text) {
   msg.textContent = text;
   msg.classList.remove('success');
   msg.classList.add('error');
 }
+
 function showSuccess(text) {
   msg.textContent = text;
   msg.classList.remove('error');
