@@ -93,6 +93,30 @@ header{
   justify-content:center;
   text-decoration:none;
 }
+
+.hero-centered {
+  display: flex;
+  flex-direction: column; /* apila hijos en columna */
+  align-items: center;    /* centra horizontal */
+  justify-content: center;/* centra vertical si tiene altura */
+  text-align: center;
+  gap: 0.5rem;            /* espacio entre título y subtítulo */
+  padding: 4rem 2rem;
+}
+
+.hero-centered h1 {
+  font-size: 2.2rem;
+  margin: 0;
+}
+
+.hero-centered .lead {
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #aaa; /* o tu var(--muted-color) */
+  max-width: 700px;
+}
+
+
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:var(--accent);color:#042027; box-shadow: 0 6px 18px rgba(6,182,212,0.12);}
 .btn.secondary {
