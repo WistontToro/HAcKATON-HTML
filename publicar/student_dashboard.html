@@ -7,87 +7,122 @@
   <meta name="description" content="Panel para estudiantes — Conciencia Digital">
   <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="style.css">
-  <!-- Agregado: Script de Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Styles específicos para este dashboard (mantienen estética existente) -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
   <style>
-    /* Layout principal */
+    :root{
+      --prog1: #ff6b6b;
+      --prog2: #3ddc84;
+      --prog3: #4fc3f7;
+      --prog-bg: #ffffff;
+    }
+
+    /* --- layout y estilos (compatibilidad con tu style.css) --- */
     .dashboard-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}
     .header-left{display:flex;align-items:center;gap:12px}
-    .profile-dropdown{position:relative}
-    .profile-btn{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:10px;padding:6px 10px;cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
-    .profile-menu{position:absolute;top:calc(100% + 8px);left:0;background:var(--card);border-radius:10px;padding:8px;box-shadow:0 12px 28px rgba(2,6,12,0.6);display:none;min-width:180px;z-index:30}
-    .profile-menu a{display:block;padding:8px;border-radius:8px;color:var(--muted);text-decoration:none}
-    .profile-menu a:hover{background:rgba(255,255,255,0.02);color:var(--text)}
-
+    .profile-btn{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:10px;padding:6px 10px;cursor:pointer}
     .header-actions{display:flex;align-items:center;gap:10px}
-    .icon-btn{background:var(--card);border-radius:10px;padding:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.03);display:inline-flex;align-items:center;gap:8px}
-    .icon-btn .count-badge{background:#ffb4b4;color:#042027;padding:2px 6px;border-radius:12px;font-size:12px;margin-left:6px}
+
+    /* Barra de progreso */
+    .progress-holder { margin: 12px 0 18px; width:100%; display:flex;flex-direction:column; gap:8px; }
+    .progress-bar { width:100%; height:18px; border-radius:12px; overflow:hidden; display:flex; background:var(--prog-bg); border:1px solid rgba(0,0,0,0.03); }
+    .progress-segment { position:relative; height:100%; }
+    .seg-1 { width:25%; }
+    .seg-2 { width:25%; }
+    .seg-3 { width:50%; }
+    .seg-fill { position:absolute; left:0; top:0; bottom:0; width:0%; transition: width 600ms cubic-bezier(.2,.9,.2,1); border-radius:8px 0 0 8px; }
+    .seg-fill.full-right { border-radius:0 8px 8px 0; }
+    .seg-fill.p1 { background: linear-gradient(90deg,var(--prog1), #ff8f66); box-shadow:0 6px 18px rgba(255,107,107,0.12) inset; }
+    .seg-fill.p2 { background: linear-gradient(90deg,var(--prog2), #58e09a); box-shadow:0 6px 18px rgba(63,221,132,0.12) inset; }
+    .seg-fill.p3 { background: linear-gradient(90deg,var(--prog3), #8fe7ff); box-shadow:0 6px 18px rgba(79,195,247,0.12) inset; }
+    .progress-labels { display:flex;justify-content:space-between;font-size:12px;color:var(--muted); }
 
     .dashboard-main{display:flex;gap:18px;margin-top:18px}
     .left-panel{width:300px;background:var(--card);padding:16px;border-radius:12px}
     .content-panel{flex:1;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px}
-
     .menu-item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;cursor:pointer;background:var(--glass);margin-bottom:10px;border:1px solid transparent}
     .menu-item.disabled{opacity:0.45;cursor:not-allowed}
     .menu-item.active{box-shadow:0 10px 30px rgba(2,6,12,0.45);border-color:rgba(255,255,255,0.03)}
-    .menu-item h4{margin:0}
-    .menu-item p{margin:0;font-size:13px;color:var(--muted)}
-
-    /* content sections */
     .section{display:none}
     .section.active{display:block}
-
-    /* video container */
     .video-wrap{position:relative;padding-top:56.25%;overflow:hidden;border-radius:8px;background:#000}
     .video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
-
-    /* exam */
     .question{padding:12px;border-radius:8px;background:var(--card);margin-bottom:10px}
     .options label{display:block;margin-bottom:6px;cursor:pointer}
     .pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
-
-    /* task */
     .task-right-counter{position:absolute;right:24px;top:140px;background:var(--card);padding:14px;border-radius:10px;min-width:120px;text-align:center;box-shadow:0 8px 24px rgba(2,6,12,0.45)}
-    
-    /* Agregado: Estilos para mensajes de validación */
-    .form-message {
-      padding: 8px 12px;
-      border-radius: 8px;
-      margin-top: 10px;
+    .form-message { padding:8px 12px; border-radius:8px; margin-top:10px; }
+    .form-message.error { background:#ffebee; color:#b71c1c; }
+    .form-message.success { background:#e8f5e9; color:#1b5e20; }
+
+    /* --- FINAL BOX (oculto por defecto) --- */
+    .final-box {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: none;          /* <-- oculto por defecto */
+      z-index: 9999;
+      width: 640px;
+      max-width: calc(100% - 32px);
+      height: 320px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #7b2ff7 0%, #ff416c 60%, #ffb86b 100%);
+      color: #fff;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.45), 0 0 24px rgba(255,255,255,0.06) inset;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      padding: 22px;
+      font-weight:800;
+      text-align:center;
+      cursor: pointer;
+      overflow: visible;
+      user-select:none;
+      pointer-events: auto;
+      opacity: 1;
     }
-    .form-message.error {
-      background-color: #ffebee;
-      color: #b71c1c;
+    .final-box .title { font-size:34px; letter-spacing:1px; margin-bottom:8px; text-transform: uppercase; text-shadow: 0 6px 18px rgba(0,0,0,0.4); }
+    .final-box .subtitle { font-size:18px; opacity:0.95; margin-bottom:12px; }
+    .final-box .emoji { font-size:56px; filter: drop-shadow(0 8px 18px rgba(0,0,0,0.35)); }
+
+    .star-wrap { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); display:flex; gap:12px; pointer-events:none; }
+    .star { width:44px; height:44px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.35)); transform-origin:center; opacity:0.96; }
+    @keyframes starFloat { 0%{ transform: translateY(0) rotate(0);} 50%{ transform: translateY(-8px) rotate(8deg);} 100%{ transform: translateY(0) rotate(0);} }
+    .star.animate { animation: starFloat 1600ms ease-in-out infinite; }
+
+    @keyframes dropDown {
+      0%  { transform: translate(-50%, -50%) scale(0.98); opacity: 0; filter: blur(8px); }
+      8%  { opacity: 1; filter: blur(0); }
+      100% { transform: translate(-50%, calc(-50% + 120px)) scale(1.02); opacity: 1; }
     }
-    .form-message.success {
-      background-color: #e8f5e9;
-      color: #1b5e20;
-    }
-    
-    /* responsive */
+    .final-box-enter { animation: dropDown 10s linear forwards; }
+
+    /* confetti pantalla */
+    .screen-confetti { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; pointer-events: none; overflow: visible; z-index: 10000; }
+    .confetti { position: fixed; width: 10px; height: 16px; border-radius: 3px; opacity: 1; transform-origin: center; }
+    @keyframes confettiRain { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(540deg); opacity: 0; } }
+
     @media (max-width:980px){
       .dashboard-main{flex-direction:column}
       .left-panel{width:100%}
       .task-right-counter{position:static;margin-top:12px}
+      .final-box { width:90%; height:240px; padding:18px; }
+      .star { width:34px; height:34px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
     <header class="dashboard-header" role="banner">
       <div class="header-left">
-        <!-- Logo (igual al index) -->
         <div class="brand" aria-hidden="false">
           <div class="logo" aria-hidden="true">CD</div>
-          <div class="brand-text" style="margin-left:8px">
-            <strong>Conciencia Digital</strong><br>
-            <small class="muted">Panel Estudiante</small>
-          </div>
+          <div class="brand-text" style="margin-left:8px"><strong>Conciencia Digital</strong><br><small class="muted">Panel Estudiante</small></div>
         </div>
 
-        <!-- Profile dropdown -->
         <div class="profile-dropdown" id="profileDropdown">
           <button class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false">
             <div style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700">E</div>
@@ -115,87 +150,66 @@
       </div>
     </header>
 
-    <!-- Main -->
+    <!-- PROGRESS BAR -->
+    <div class="progress-holder" aria-hidden="false">
+      <div class="progress-bar" role="progressbar" aria-label="Progreso de actividades" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-segment seg-1"><div class="seg-fill p1" id="seg1Fill" style="width:0%"></div></div>
+        <div class="progress-segment seg-2"><div class="seg-fill p2" id="seg2Fill" style="width:0%"></div></div>
+        <div class="progress-segment seg-3"><div class="seg-fill p3" id="seg3Fill" style="width:0%"></div></div>
+      </div>
+      <div class="progress-labels">
+        <div>Lección / Video</div>
+        <div>Examen</div>
+        <div style="text-align:right">Tarea</div>
+      </div>
+    </div>
+
     <div class="dashboard-main" role="main">
-      <!-- Left: opciones -->
       <aside class="left-panel" aria-label="Opciones">
         <div style="font-weight:700;margin-bottom:10px">Actividades</div>
-
         <div id="menuLesson" class="menu-item active" data-section="lesson" tabindex="0">
-          <div>
-            <h4>Lección</h4>
-            <p class="muted">Lee el texto de concientización</p>
-          </div>
+          <div><h4>Lección</h4><p class="muted">Lee el texto de concientización</p></div>
           <div id="statusLesson">●</div>
         </div>
-
         <div id="menuVideo" class="menu-item disabled" data-section="video" tabindex="0">
-          <div>
-            <h4>Video</h4>
-            <p class="muted">Mira el video completo</p>
-          </div>
+          <div><h4>Video</h4><p class="muted">Mira el video completo</p></div>
           <div id="statusVideo">●</div>
         </div>
-
         <div id="menuExam" class="menu-item disabled" data-section="exam" tabindex="0">
-          <div>
-            <h4>Examen</h4>
-            <p class="muted">3 preguntas (mínimo 2 correctas para avanzar)</p>
-          </div>
+          <div><h4>Examen</h4><p class="muted">3 preguntas (mínimo 2 correctas para avanzar)</p></div>
           <div id="statusExam">●</div>
         </div>
-
         <div id="menuTask" class="menu-item disabled" data-section="task" tabindex="0">
-          <div>
-            <h4>Tarea</h4>
-            <p class="muted">Envía evidencias (2 fotos)</p>
-          </div>
+          <div><h4>Tarea</h4><p class="muted">Envía evidencias (2 fotos)</p></div>
           <div id="statusTask">●</div>
         </div>
       </aside>
 
-      <!-- Right: visualización -->
       <section class="content-panel" aria-live="polite">
-        <!-- LECCIÓN -->
         <div id="lesson" class="section active">
           <h2>Salud mental en el uso de las TIC</h2>
           <p class="muted">Autor: RUCTIC Conciencia Digital</p>
           <article style="margin-top:12px;line-height:1.6">
-            <p><strong>Lección:</strong> La salud mental digital hace referencia a la manera en que el uso de la tecnología afecta nuestro bienestar emocional, social y físico. Hoy, pasamos varias horas frente a pantallas: navegando en redes, estudiando, trabajando o entreteniéndonos. El reto está en usar la tecnología de forma consciente y equilibrada, para que se convierta en una aliada y no en un factor de desgaste.</p>
-            <p><strong>Objetivo de aprendizaje:</strong> al finalizar este módulo, reconocerás la importancia de cuidar tu salud mental en el uso de las TIC e identificarás tres prácticas simples para mantener un equilibrio digital en tu vida diaria.</p>
-            <p><strong>Texto explicativo: </strong>La salud mental digital nos invita a reflexionar sobre cómo la tecnología influye en nuestra mente y emociones. Investigaciones recientes muestran que el uso excesivo de redes sociales se asocia con mayor ansiedad y menor calidad de sueño. Sin embargo, la solución no es desconectarse por completo, sino aprender a <strong> el tiempo en pantalla, cuidar los hábitos de descanso y relacionarnos de manera positiva en el mundo digital.</strong><br> Practicar pequeñas acciones —como establecer horarios de desconexión, evitar pantallas antes de dormir y elegir interacciones constructivas en redes— puede marcar la diferencia en nuestra salud mental.</p>
+            <p><strong>Lección:</strong> La salud mental digital hace referencia a la manera en que el uso de la tecnología afecta nuestro bienestar emocional, social y físico...</p>
           </article>
-
           <div style="margin-top:18px;display:flex;gap:10px;align-items:center">
             <button id="markReadBtn" class="btn primary">Marcar como leído</button>
             <div id="lessonMsg" class="muted" style="margin-left:8px"></div>
           </div>
         </div>
 
-        <!-- VIDEO -->
         <div id="video" class="section">
           <h2>Video de concientización</h2>
           <p class="muted">Ver el video completo para desbloquear el examen.</p>
-          <div style="margin-top:12px" id="videoWrap">
-            <div class="video-wrap" id="playerWrap">
-              <!-- IFrame se insertará dinámicamente -->
-              <div id="player"></div>
-            </div>
-          </div>
-          <div style="margin-top:12px">
-            <span id="videoStatus" class="muted">Estado: no visto</span>
-          </div>
+          <div style="margin-top:12px" id="videoWrap"><div class="video-wrap" id="playerWrap"><div id="player"></div></div></div>
+          <div style="margin-top:12px"><span id="videoStatus" class="muted">Estado: no visto</span></div>
         </div>
 
-        <!-- EXAMEN -->
         <div id="exam" class="section">
           <h2>Examen</h2>
           <p class="muted">Responde las preguntas una por una. Debes responder cada pregunta para avanzar.</p>
-
           <div id="examArea" style="margin-top:12px">
-            <!-- preguntas renderizadas aquí -->
             <div id="questionsContainer"></div>
-
             <div class="pager">
               <div class="muted" id="examPageInfo">Página 1 / 4</div>
               <div>
@@ -204,100 +218,210 @@
               </div>
             </div>
           </div>
-
           <div id="examResult" style="margin-top:12px"></div>
         </div>
 
-        <!-- TAREA -->
         <div id="task" class="section">
           <h2>Subir evidencia</h2>
           <p class="muted">Introduce el código del evaluado y, si coincide, podrás subir dos fotos como evidencia.</p>
-
           <div style="display:flex;gap:18px;align-items:flex-start">
             <div style="flex:1">
-              <div class="field-group">
-                <label for="codeEval">Código del evaluado</label>
-                <input id="codeEval" type="text" placeholder="Código asignado (10 dígitos)">
-              </div>
-
+              <div class="field-group"><label for="codeEval">Código del evaluado</label><input id="codeEval" type="text" placeholder="Código asignado (10 dígitos)"></div>
               <div id="fileArea" style="display:none;margin-top:12px">
-                <div class="field-group">
-                  <label>Foto 1</label>
-                  <input id="photo1" type="file" accept="image/*">
-                </div>
-                <div class="field-group">
-                  <label>Foto 2</label>
-                  <input id="photo2" type="file" accept="image/*">
-                </div>
+                <div class="field-group"><label>Foto 1</label><input id="photo1" type="file" accept="image/*"></div>
+                <div class="field-group"><label>Foto 2</label><input id="photo2" type="file" accept="image/*"></div>
                 <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
                   <button id="savePhotosBtn" class="btn primary" disabled>Guardar evidencias</button>
-                  <!-- Botón "Revisar evidencia" añadido (por ahora sin funcionalidad) -->
-                  <button id="reviewEvidenceBtn" class="btn secondary" title="Revisar evidencia">Revisar evidencia</button>
+                  <button id="reviewEvidenceBtn" class="btn secondary" title="Revisar evidencia" disabled>Revisar evidencia</button>
                 </div>
               </div>
-
               <div id="taskMsg" class="form-message" style="margin-top:12px"></div>
             </div>
 
-            <!-- contador derecho -->
             <div class="task-right-counter" aria-hidden="true">
               <div style="font-weight:700">Contador</div>
               <div class="muted" style="margin-top:8px" id="counterValue">0</div>
             </div>
           </div>
         </div>
-
       </section>
     </div>
   </div>
 
-  <!-- YouTube IFrame API -->
-  <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- FINAL BOX (oculto hasta alcanzarse contador=3) -->
+  <div class="final-box" id="finalBox" role="status" aria-live="polite" tabindex="0">
+    <div class="star-wrap" id="starWrap">
+      <svg class="star animate" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.7 5.56L19.336 24 12 19.897 4.664 24 6.3 15.31 0.6 9.75l7.732-1.732L12 .587z"/></svg>
+      <svg class="star animate" viewBox="0 0 24 24" fill="#ffd54f" xmlns="http://www.w3.org/2000/svg"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.7 5.56L19.336 24 12 19.897 4.664 24 6.3 15.31 0.6 9.75l7.732-1.732L12 .587z"/></svg>
+      <svg class="star animate" viewBox="0 0 24 24" fill="#ffeb3b" xmlns="http://www.w3.org/2000/svg"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.7 5.56L19.336 24 12 19.897 4.664 24 6.3 15.31 0.6 9.75l7.732-1.732L12 .587z"/></svg>
+    </div>
+    <div class="emoji">✨</div>
+    <div class="title">Trabajo comunitario finalizado</div>
+    <div class="subtitle">¡Gracias! Has completado las 3 evidencias. 🏆</div>
+  </div>
 
   <script>
     /***********************
-     * Estado y utilidades
+     * Estado (inicial)
      ***********************/
     const state = {
       lessonRead: false,
       videoWatched: false,
-      exam: {
-        page: 0,
-        answers: Array(3).fill(null),
-        correctCount: 0
-      },
-      task: {
-        allowed: false
-      }
+      exam: { page:0, answers: Array(3).fill(null), correctCount:0 },
+      task: { allowed:false, counter:0 }
     };
 
-    // Inicialización de Supabase (mismo proyecto RUCTIC)
     const SUPABASE_URL = 'https://gpgxaeynjsvovdzyppoo.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_HuchtYI9DCe9M70OqefGIg_LM9UDoZm';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    /* Elementos globales (obtengo referencias cuando DOM listo) */
+    let seg1Fill, seg2Fill, seg3Fill, finalBox, counterValueEl;
+    let finalBoxTimer = null, confettiCleanupTimer = null;
+    let finalBoxShown = false;
+
+    function updateProgressBar(){
+      if(!seg1Fill || !seg2Fill || !seg3Fill) return;
+      const seg1Percent = ((state.lessonRead ? 0.5 : 0) + (state.videoWatched ? 0.5 : 0)) * 100;
+      seg1Fill.style.width = seg1Percent + '%';
+      seg1Fill.classList.toggle('full-right', seg1Percent >= 100);
+
+      const seg2Percent = (state.exam.correctCount / 3) * 100;
+      seg2Fill.style.width = (seg2Percent || 0) + '%';
+      seg2Fill.classList.toggle('full-right', seg2Percent >= 100);
+
+      const seg3Percent = Math.min((state.task.counter / 3) * 100, 100);
+      seg3Fill.style.width = seg3Percent + '%';
+      seg3Fill.classList.toggle('full-right', seg3Percent >= 100);
+    }
+
+    // Mostrar recuadro y auto-cerrar después de 10s con lluvia confetti
+    function showFinalBoxAndAutoClose() {
+      if (!finalBox || finalBoxShown) return;
+      finalBoxShown = true;
+      // Asegurar estado visual limpio
+      clearAllConfetti();
+      clearFinalBoxTimers();
+
+      finalBox.style.display = 'flex';
+      finalBox.style.opacity = '1';
+      finalBox.classList.remove('final-box-enter'); // forzar reflow
+      void finalBox.offsetWidth;
+      finalBox.classList.add('final-box-enter');
+      document.querySelectorAll('.star').forEach((s,i)=> s.style.animationDelay = (i*100)+'ms');
+
+      finalBoxTimer = setTimeout(()=> {
+        // lanzar lluvia confetti grande
+        launchScreenConfetti(140);
+        // fade-out rápido
+        finalBox.classList.remove('final-box-enter');
+        finalBox.style.transition = 'opacity 450ms ease, transform 450ms ease';
+        finalBox.style.opacity = '0';
+        finalBox.style.transform = 'translate(-50%, calc(-50% + 180px)) scale(0.96)';
+        setTimeout(()=>{
+          finalBox.style.display = 'none';
+          finalBox.style.opacity = '';
+          finalBox.style.transform = '';
+          finalBox.style.transition = '';
+        }, 500);
+      }, 10000);
+    }
+
+    function clearFinalBoxTimers(){
+      if(finalBoxTimer){ clearTimeout(finalBoxTimer); finalBoxTimer = null; }
+      if(confettiCleanupTimer){ clearTimeout(confettiCleanupTimer); confettiCleanupTimer = null; }
+    }
+
+    function clearAllConfetti(){
+      // eliminar confetti en pantalla si existe
+      document.querySelectorAll('.screen-confetti, .confetti-piece, .confetti').forEach(el => el.remove());
+    }
+
+    function launchScreenConfetti(count = 100) {
+      clearAllConfetti();
+      const colors = ['#FFD166','#06D6A0','#118AB2','#EF476F','#FFC857','#C77DFF','#7BE0FF'];
+      const container = document.createElement('div');
+      container.className = 'screen-confetti';
+      document.body.appendChild(container);
+
+      for(let i=0;i<count;i++){
+        const conf = document.createElement('div');
+        conf.className = 'confetti';
+        const w = 7 + Math.random()*14;
+        const h = 10 + Math.random()*20;
+        conf.style.width = w + 'px';
+        conf.style.height = h + 'px';
+        conf.style.left = (Math.random()*100) + 'vw';
+        conf.style.top = (-10 - Math.random()*20) + 'vh';
+        conf.style.background = colors[Math.floor(Math.random()*colors.length)];
+        const delay = Math.random()*400;
+        const dur = 1400 + Math.random()*1600;
+        conf.style.animation = `confettiRain ${dur}ms cubic-bezier(.2,.8,.2,1) ${delay}ms forwards`;
+        conf.style.transform = `rotate(${Math.random()*360}deg)`;
+        container.appendChild(conf);
+        setTimeout(()=> { conf.remove(); }, dur + delay + 80);
+      }
+
+      // borrar contenedor transcurrido el tiempo
+      confettiCleanupTimer = setTimeout(()=> {
+        container.remove();
+      }, 4000 + 3000);
+    }
+
     /***********************
-     * Header / profile dropdown
+     * DOMContentLoaded: inicialización segura
      ***********************/
+    document.addEventListener('DOMContentLoaded', () => {
+      // referencias a elementos
+      seg1Fill = document.getElementById('seg1Fill');
+      seg2Fill = document.getElementById('seg2Fill');
+      seg3Fill = document.getElementById('seg3Fill');
+      finalBox = document.getElementById('finalBox');
+      counterValueEl = document.getElementById('counterValue');
+
+      // Asegurar limpieza visual por si algo quedó
+      clearAllConfetti();
+      clearFinalBoxTimers();
+      if(finalBox){
+        finalBox.style.display = 'none';
+        finalBox.classList.remove('final-box-enter');
+        finalBox.style.opacity = '';
+        finalBox.style.transform = '';
+      }
+
+      // Forzar contador a 0 al iniciar sesión / cargar la página
+      state.task.counter = 0;
+      if(counterValueEl) counterValueEl.textContent = String(state.task.counter);
+
+      // Asegurar finalBoxShown false (por si existiera persistido)
+      finalBoxShown = false;
+
+      // Inicializar UI y progresos
+      renderExamPage();
+      updateMenuState();
+      updateProgressBar();
+    });
+
+    /***********************
+     * Rest of app behavior (menus, lesson, video, exam, task)
+     ***********************/
+    // Header dropdown
     const profileBtn = document.getElementById('profileBtn');
     const profileMenu = document.getElementById('profileMenu');
-    profileBtn.addEventListener('click', (e) => {
+    profileBtn && profileBtn.addEventListener('click', ()=> {
       const expanded = profileBtn.getAttribute('aria-expanded') === 'true';
       profileBtn.setAttribute('aria-expanded', String(!expanded));
       profileMenu.style.display = expanded ? 'none' : 'block';
       profileMenu.setAttribute('aria-hidden', expanded ? 'true' : 'false');
     });
-    // click fuera para cerrar
-    document.addEventListener('click', (e) => {
-      if(!profileBtn.contains(e.target) && !profileMenu.contains(e.target)){
+    document.addEventListener('click', (e)=>{
+      if(profileBtn && profileMenu && !profileBtn.contains(e.target) && !profileMenu.contains(e.target)){
         profileMenu.style.display = 'none';
         profileBtn.setAttribute('aria-expanded', 'false');
       }
     });
 
-    /***********************
-     * Menu izquierdo: navegación entre secciones
-     ***********************/
+    // Menú/navigation
     const menuItems = {
       lesson: document.getElementById('menuLesson'),
       video: document.getElementById('menuVideo'),
@@ -311,21 +435,17 @@
       task: document.getElementById('task')
     };
 
-    // utility: show section if allowed
     function canAccess(section){
       if(section === 'video') return state.lessonRead;
       if(section === 'exam') return state.lessonRead && state.videoWatched;
       if(section === 'task') return (state.lessonRead && state.videoWatched && state.exam.correctCount >= 2);
-      return true; // lesson always allowed
+      return true;
     }
 
     function updateMenuState(){
-      // update disabled/class based on state
-      menuItems.video.classList.toggle('disabled', !canAccess('video'));
-      menuItems.exam.classList.toggle('disabled', !canAccess('exam'));
-      menuItems.task.classList.toggle('disabled', !canAccess('task'));
-
-      // statuses
+      if(menuItems.video) menuItems.video.classList.toggle('disabled', !canAccess('video'));
+      if(menuItems.exam) menuItems.exam.classList.toggle('disabled', !canAccess('exam'));
+      if(menuItems.task) menuItems.task.classList.toggle('disabled', !canAccess('task'));
       document.getElementById('statusLesson').textContent = state.lessonRead ? '✓' : '●';
       document.getElementById('statusVideo').textContent = state.videoWatched ? '✓' : '●';
       document.getElementById('statusExam').textContent = (state.exam.correctCount >= 2) ? (state.exam.correctCount + '✓') : (state.exam.correctCount ? state.exam.correctCount : '●');
@@ -333,105 +453,56 @@
     }
 
     function showSection(name){
-      // if not allowed, show small hint and abort
-      if(!canAccess(name)){
-        alert('No puedes acceder a "'+ name +'" aún. Completa las actividades previas.');
-        return;
-      }
-      // deactivate menu items
-      Object.values(menuItems).forEach(mi => mi.classList.remove('active'));
-      menuItems[name].classList.add('active');
-
-      // switch content
-      Object.values(sections).forEach(s => s.classList.remove('active'));
-      sections[name].classList.add('active');
-
-      // if opening exam, render questions page
+      if(!canAccess(name)){ alert('No puedes acceder a "'+ name +'" aún. Completa las actividades previas.'); return; }
+      Object.values(menuItems).forEach(mi=>mi.classList.remove('active'));
+      menuItems[name] && menuItems[name].classList.add('active');
+      Object.values(sections).forEach(s=>s.classList.remove('active'));
+      sections[name] && sections[name].classList.add('active');
       if(name === 'exam') renderExamPage();
     }
 
-    // attach clicks
     Object.entries(menuItems).forEach(([name, el])=>{
+      if(!el) return;
       el.addEventListener('click', ()=> showSection(name));
       el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') showSection(name); });
     });
 
-    /***********************
-     * LECCIÓN
-     ***********************/
+    // Lección
     const markReadBtn = document.getElementById('markReadBtn');
     const lessonMsg = document.getElementById('lessonMsg');
-    markReadBtn.addEventListener('click', ()=>{
+    if(markReadBtn) markReadBtn.addEventListener('click', ()=>{
       state.lessonRead = true;
       lessonMsg.textContent = 'Lección completada. Ahora puedes acceder al video.';
       updateMenuState();
+      updateProgressBar();
     });
 
-    /***********************
-     * VIDEO (YouTube IFrame API)
-     ***********************/
-    // Video ID from provided short link: https://youtu.be/Uum1-KLFbis     -> ID = Uum1-KLFbis
+    // Video (YouTube)
     const YT_VIDEO_ID = 'DcdhJahVwyc';
     let player;
     function onYouTubeIframeAPIReady(){
       player = new YT.Player('player', {
-        height: '360',
-        width: '640',
-        videoId: YT_VIDEO_ID,
-        playerVars: { 'playsinline': 1 },
-        events: {
-          'onStateChange': onPlayerStateChange
-        }
+        height: '360', width: '640', videoId: YT_VIDEO_ID, playerVars: {'playsinline':1},
+        events: { 'onStateChange': onPlayerStateChange }
       });
     }
     function onPlayerStateChange(event){
-      // 0 = ended
       if(event.data === 0){
         state.videoWatched = true;
         document.getElementById('videoStatus').textContent = 'Estado: visto (completo).';
         updateMenuState();
+        updateProgressBar();
         alert('Has visto el video completo. El examen ahora está desbloqueado.');
       }
-      if(event.data === 1){
-        document.getElementById('videoStatus').textContent = 'Estado: reproduciendo...';
-      }
-      if(event.data === 2){
-        document.getElementById('videoStatus').textContent = 'Estado: pausado';
-      }
+      if(event.data === 1) document.getElementById('videoStatus').textContent = 'Estado: reproduciendo...';
+      if(event.data === 2) document.getElementById('videoStatus').textContent = 'Estado: pausado';
     }
 
-    /***********************
-     * EXAMEN
-     ***********************/
-    // 3 preguntas sobre salud mental digital. Each: {q, options:[], correctIndex}
+    // Examen
     const questions = [
-      { 
-        q: '¿Qué es la salud mental digital?', 
-        options: [
-          'La desconexión total de la tecnología',
-          'El impacto de la tecnología en nuestras emociones y mente',
-          'El uso de redes sociales únicamente para estudiar'
-        ], 
-        correctIndex: 1 
-      },
-      { 
-        q: '¿Cuál de estas es una práctica saludable?', 
-        options: [
-          'Dormir con el celular en la mano',
-          'Hacer pausas de descanso cada hora frente a la pantalla',
-          'Compararte con otros en redes sociales'
-        ], 
-        correctIndex: 1 
-      },
-      { 
-        q: '¿Por qué no se recomienda usar pantallas antes de dormir?', 
-        options: [
-          'Porque gasta datos móviles',
-          'Porque disminuye la calidad del sueño',
-          'Porque evita que uses redes sociales'
-        ], 
-        correctIndex: 1 
-      }
+      { q:'¿Qué es la salud mental digital?', options:['La desconexión total de la tecnología','El impacto de la tecnología en nuestras emociones y mente','El uso de redes sociales únicamente para estudiar'], correctIndex:1 },
+      { q:'¿Cuál de estas es una práctica saludable?', options:['Dormir con el celular en la mano','Hacer pausas de descanso cada hora frente a la pantalla','Compararte con otros en redes sociales'], correctIndex:1 },
+      { q:'¿Por qué no se recomienda usar pantallas antes de dormir?', options:['Porque gasta datos móviles','Porque disminuye la calidad del sueño','Porque evita que uses redes sociales'], correctIndex:1 }
     ];
 
     const questionsContainer = document.getElementById('questionsContainer');
@@ -445,6 +516,7 @@
       const perPage = 1;
       const start = page * perPage;
       const end = start + perPage;
+      if(!questionsContainer) return;
       questionsContainer.innerHTML = '';
       for(let i=start;i<end;i++){
         const q = questions[i];
@@ -452,8 +524,7 @@
         wrapper.className = 'question';
         const qIndex = i;
         wrapper.innerHTML = `<div style="font-weight:700">Pregunta ${i+1}</div><div style="margin-top:8px">${q.q}</div>`;
-        const optionsDiv = document.createElement('div');
-        optionsDiv.className = 'options';
+        const optionsDiv = document.createElement('div'); optionsDiv.className='options';
         q.options.forEach((opt, idx)=>{
           const id = `q${qIndex}_opt${idx}`;
           const label = document.createElement('label');
@@ -462,252 +533,148 @@
         });
         wrapper.appendChild(optionsDiv);
         questionsContainer.appendChild(wrapper);
-
-        // if there is already an answer, mark it
         const existing = state.exam.answers[qIndex];
-        if(existing !== null && existing !== undefined){
+        if(existing!==null && existing!==undefined){
           const radio = wrapper.querySelector(`input[value="${existing}"]`);
           if(radio) radio.checked = true;
         }
       }
-
-      examPageInfo.textContent = `Página ${page+1} / ${Math.ceil(questions.length / 1)}`;
-
-      // Enable/disable prev/next buttons
-      prevPageBtn.disabled = page === 0;
-      // nextPageBtn enabled only if all three answered
+      examPageInfo.textContent = `Página ${page+1} / ${Math.ceil(questions.length/1)}`;
+      prevPageBtn.disabled = page===0;
       checkPageAnswered();
     }
 
     function checkPageAnswered(){
-      const page = state.exam.page;
-      const perPage = 1; // Una pregunta por página
-      const start = page * perPage;
-      const end = start + perPage;
+      const page = state.exam.page; const perPage=1; const start=page*perPage; const end=start+perPage;
       let allAnswered = true;
       for(let i=start;i<end;i++){
         const selected = document.querySelector(`input[name="q${i}"]:checked`);
-        if(!selected) { allAnswered = false; break; }
+        if(!selected){ allAnswered=false; break; }
       }
-      nextPageBtn.disabled = !allAnswered;
+      if(nextPageBtn) nextPageBtn.disabled = !allAnswered;
     }
 
-    // listen for option changes to update state
-    questionsContainer.addEventListener('change', (e)=>{
+    questionsContainer && questionsContainer.addEventListener('change',(e)=>{
       if(!e.target.name) return;
       const qIndex = parseInt(e.target.name.replace('q',''));
       const val = parseInt(e.target.value);
       state.exam.answers[qIndex] = val;
-      // re-check page validity
       checkPageAnswered();
     });
 
-    prevPageBtn.addEventListener('click', ()=>{
-      if(state.exam.page > 0) {
-        state.exam.page--;
-        renderExamPage();
+    prevPageBtn && prevPageBtn.addEventListener('click', ()=>{ if(state.exam.page>0){ state.exam.page--; renderExamPage(); } });
+
+    nextPageBtn && nextPageBtn.addEventListener('click', ()=>{
+      const perPage=1;
+      if(state.exam.page < Math.ceil(questions.length/perPage)-1){
+        state.exam.page++; renderExamPage();
       }
-    });
-
-    nextPageBtn.addEventListener('click', ()=>{
-      const perPage = 1;
-      const page = state.exam.page;
-      const start = page * perPage;
-      const end = start + perPage;
-
-      // move to next if not last page
-      if(state.exam.page < Math.ceil(questions.length / perPage) - 1){
-        state.exam.page++;
-        renderExamPage();
-      }
-
-      // If all answered after any move, compute results and apply logic
-      const answeredAll = state.exam.answers.every(a => a !== null && a !== undefined);
+      const answeredAll = state.exam.answers.every(a => a!==null && a!==undefined);
       if(answeredAll){
         let correct = 0;
-        for(let i=0;i<questions.length;i++){
-          if(state.exam.answers[i] === questions[i].correctIndex) correct++;
-        }
+        for(let i=0;i<questions.length;i++){ if(state.exam.answers[i] === questions[i].correctIndex) correct++; }
         state.exam.correctCount = correct;
         examResult.innerHTML = `<div class="card"><strong>Has respondido todas las preguntas.</strong><div class="muted" style="margin-top:6px">Respuestas correctas: ${correct} / ${questions.length}</div></div>`;
-
+        updateProgressBar();
         if(correct >= 2){
           alert('Has alcanzado al menos 2 respuestas correctas. La Tarea está desbloqueada.');
-          state.task.allowed = true;
-          updateMenuState();
+          state.task.allowed = true; updateMenuState();
         } else {
-          alert('No alcanzaste el mínimo de 2 respuestas correctas de 3. Se reiniciará el flujo (volverás a la Lección).');
-          state.lessonRead = false;
-          state.videoWatched = false;
-          state.exam.answers = Array(3).fill(null);
-          state.exam.page = 0;
-          state.exam.correctCount = 0;
-          state.task.allowed = false;
+          alert('No alcanzaste el mínimo de 2 respuestas correctas de 3. Volverás a la Lección.');
+          state.lessonRead=false; state.videoWatched=false; state.exam.answers=Array(3).fill(null); state.exam.page=0; state.exam.correctCount=0; state.task.allowed=false;
           updateMenuState();
           showSection('lesson');
+          updateProgressBar();
           return;
         }
       }
       updateMenuState();
     });
 
-    /***********************
-     * TASK (tarea)
-     ***********************/
+    // TASK
     const codeInput = document.getElementById('codeEval');
     const fileArea = document.getElementById('fileArea');
     const photo1 = document.getElementById('photo1');
     const photo2 = document.getElementById('photo2');
     const savePhotosBtn = document.getElementById('savePhotosBtn');
     const taskMsg = document.getElementById('taskMsg');
-    const counterValueEl = document.getElementById('counterValue');
     const reviewEvidenceBtn = document.getElementById('reviewEvidenceBtn');
 
-    // Validación de código de participante con Supabase
-    codeInput.addEventListener('input', async () => {
+    codeInput && codeInput.addEventListener('input', async () => {
       const code = codeInput.value.trim();
-      
-      // Limpiar clases anteriores
-      taskMsg.classList.remove('error', 'success');
-      
-      // Solo continuar si el código tiene 10 dígitos
-      if (code.length < 10) {
-        if (code.length > 0) {
-          taskMsg.textContent = 'El código debe tener 10 dígitos.';
-          taskMsg.classList.add('error');
-        } else {
-          taskMsg.textContent = '';
-        }
-        fileArea.style.display = 'none';
-        savePhotosBtn.disabled = true;
-        return;
-      }
-      
-      // Mostrar estado de carga
-      taskMsg.textContent = 'Verificando código...';
-      taskMsg.classList.add('muted');
-      
+      taskMsg.classList.remove('error','success');
+      if(code.length < 10){ if(code.length>0){ taskMsg.textContent='El código debe tener 10 dígitos.'; taskMsg.classList.add('error'); } else { taskMsg.textContent=''; } fileArea.style.display='none'; savePhotosBtn.disabled=true; return; }
+      taskMsg.textContent='Verificando código...'; taskMsg.classList.add('muted');
+
       try {
-        // Consultar en la tabla profiles por id_participantes
-        const { data, error } = await sb
-          .from('profiles')
-          .select('nombre')
-          .eq('id_participantes', code)
-          .single();
-          
-        if (error || !data) {
-          throw new Error('Código no reconocido.');
-        }
-        
-        // Código válido - mostrar nombre del participante
-        fileArea.style.display = 'block';
+        const { data, error } = await sb.from('profiles').select('nombre').eq('id_participantes', code).single();
+        if(error || !data) throw new Error('Código no reconocido.');
+        fileArea.style.display='block';
         taskMsg.textContent = `Código válido. Puedes subir las fotos con ${data.nombre}.`;
-        taskMsg.classList.remove('muted', 'error');
-        taskMsg.classList.add('success');
-        
-        // Habilitar botón si hay fotos seleccionadas
+        taskMsg.classList.remove('muted','error'); taskMsg.classList.add('success');
         savePhotosBtn.disabled = !(photo1.files.length && photo2.files.length);
-      } catch (err) {
-        fileArea.style.display = 'none';
-        savePhotosBtn.disabled = true;
-        taskMsg.textContent = err.message;
-        taskMsg.classList.remove('muted', 'success');
-        taskMsg.classList.add('error');
+      } catch(err){
+        fileArea.style.display='none'; savePhotosBtn.disabled=true;
+        taskMsg.textContent = err.message; taskMsg.classList.remove('muted','success'); taskMsg.classList.add('error');
       }
     });
 
-    // Enable save button only when both files chosen
-    function checkFilesSelected(){
-      savePhotosBtn.disabled = !(photo1.files.length && photo2.files.length);
-    }
-    photo1.addEventListener('change', checkFilesSelected);
-    photo2.addEventListener('change', checkFilesSelected);
+    function checkFilesSelected(){ if(savePhotosBtn) savePhotosBtn.disabled = !(photo1.files.length && photo2.files.length); }
+    photo1 && photo1.addEventListener('change', checkFilesSelected);
+    photo2 && photo2.addEventListener('change', checkFilesSelected);
 
-    savePhotosBtn.addEventListener('click', ()=>{
-      // Simula recibir archivos y luego eliminar (no upload real)
+    savePhotosBtn && savePhotosBtn.addEventListener('click', ()=>{
       if(!photo1.files.length || !photo2.files.length){
-        taskMsg.textContent = 'Selecciona ambas fotos antes de guardar.';
-        taskMsg.classList.add('error');
-        return;
+        taskMsg.textContent = 'Selecciona ambas fotos antes de guardar.'; taskMsg.classList.add('error'); return;
       }
-      // Simulate processing
-      taskMsg.textContent = 'Guardando evidencias...';
-      taskMsg.classList.remove('success', 'error');
-      taskMsg.classList.add('muted');
-      
-      setTimeout(()=>{
+      taskMsg.textContent = 'Guardando evidencias...'; taskMsg.classList.remove('success','error'); taskMsg.classList.add('muted');
+
+      setTimeout(async ()=>{
         taskMsg.textContent = 'Evidencias guardadas (simulado). Los archivos han sido eliminados del cliente.';
-        taskMsg.classList.remove('muted');
-        taskMsg.classList.add('success');
-        
-        // clear inputs to simulate deletion
-        photo1.value = '';
-        photo2.value = '';
+        taskMsg.classList.remove('muted'); taskMsg.classList.add('success');
+
+        photo1.value = ''; photo2.value = '';
         savePhotosBtn.disabled = true;
 
-        // increment counter by 1
-        const current = parseInt(counterValueEl.textContent || '0', 10);
-        counterValueEl.textContent = String(current + 1);
+        // increment contador y actualizar UI
+        const prior = state.task.counter;
+        state.task.counter = Math.min(3, state.task.counter + 1);
+        if(counterValueEl) counterValueEl.textContent = String(state.task.counter);
+        reviewEvidenceBtn && (reviewEvidenceBtn.disabled = false);
 
-        // enable "Revisar evidencia" button (no functionality for now)
-        reviewEvidenceBtn.disabled = false;
+        updateProgressBar();
+
+        // SOLO mostrar el recuadro si acabamos de alcanzar 3 (pasó de 2 a 3).
+        if (prior < 3 && state.task.counter === 3) {
+          showFinalBoxAndAutoClose();
+        }
       }, 900);
     });
 
-    /***********************
-     * Inicialización
-     ***********************/
-    // render first exam page at load (in case user opens exam)
-    renderExamPage();
-    updateMenuState();
-
-    // Small accessibility: keyboard shortcuts for menu (1..4)
-    // UPDATED: ignore keystrokes when focus is in an input/textarea/contenteditable
+    // atajos teclado
     document.addEventListener('keydown', (e) => {
-      // Ignorar si el foco está en un input, textarea o elemento editable
       const active = document.activeElement;
       const tag = active && active.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || active?.isContentEditable) return;
-
-      // Ignorar si se presionan modificadores (Ctrl/Alt/Meta)
-      if (e.ctrlKey || e.altKey || e.metaKey) return;
-
-      // Atajos globales (solo cuando no hay foco en un campo)
-      if (e.key === '1') showSection('lesson');
-      if (e.key === '2') showSection('video');
-      if (e.key === '3') showSection('exam');
-      if (e.key === '4') showSection('task');
+      if(tag === 'INPUT' || tag === 'TEXTAREA' || active?.isContentEditable) return;
+      if(e.ctrlKey || e.altKey || e.metaKey) return;
+      if(e.key === '1') showSection('lesson');
+      if(e.key === '2') showSection('video');
+      if(e.key === '3') showSection('exam');
+      if(e.key === '4') showSection('task');
     });
-    
-    // === Mostrar nombre y código del usuario ===
+
+    // Mostrar nombre/código del usuario (localStorage)
     document.addEventListener('DOMContentLoaded', () => {
       const userName = localStorage.getItem('userName');
       const userCode = localStorage.getItem('userIdParticipantes');
-
       const nameDisplay = document.getElementById('userNameDisplay');
       const codeDisplay = document.getElementById('userCodeDisplay');
-
-      if (nameDisplay && userName) {
-        nameDisplay.textContent = userName;
-      }
-
-      if (codeDisplay) {
-        if (userCode) {
-          codeDisplay.textContent = `ID: ${userCode}`;
-          codeDisplay.style.fontFamily = 'monospace';
-          codeDisplay.style.color = '#4CAF50'; // Verde para destacar
-        } else {
-          codeDisplay.textContent = 'ID: no disponible';
-          console.warn('No se encontró userIdParticipantes en localStorage');
-        }
+      if(nameDisplay && userName) nameDisplay.textContent = userName;
+      if(codeDisplay){
+        if(userCode){ codeDisplay.textContent = `ID: ${userCode}`; codeDisplay.style.fontFamily='monospace'; codeDisplay.style.color='#4CAF50'; }
+        else { codeDisplay.textContent = 'ID: no disponible'; console.warn('No se encontró userIdParticipantes en localStorage'); }
       }
     });
-
-    /***********************
-     * Nota: si quieres forzar desbloqueos en pruebas
-     * puedes ejecutar en la consola:
-     * state.lessonRead = true; state.videoWatched = true; updateMenuState();
-     ***********************/
   </script>
 </body>
 </html>

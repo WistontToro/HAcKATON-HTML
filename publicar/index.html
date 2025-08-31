@@ -8,14 +8,81 @@
   <link rel="icon" href="faviconructic.ico">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Estilos del modal de video (puedes moverlos a style.css si prefieres) */
+    .video-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1200;
+      pointer-events: none;
+    }
+    .video-modal[hidden] { display: none; }
+    .video-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(2px);
+    }
+    .video-modal-panel {
+      position: relative;
+      max-width: 1100px;
+      width: calc(100% - 32px);
+      margin: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      pointer-events: auto;
+      z-index: 1;
+      background: #000;
+    }
+    .video-wrapper {
+      width: 100%;
+      aspect-ratio: 16/9; /* relación 16:9 */
+      height: auto;
+      background: #000;
+    }
+    .video-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: 0;
+    }
+    .video-modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 3;
+      background: rgba(255,255,255,0.08);
+      border: 0;
+      color: #fff;
+      font-size: 20px;
+      line-height: 1;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .video-modal-close:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+    @media (max-width:600px){
+      .video-modal-panel { width: calc(100% - 16px); margin: 8px; border-radius: 6px; }
+      .video-modal-close { top: 6px; right: 6px; width:36px; height:36px; }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <header>
       <div class="brand" aria-hidden="false">
         <div class="logo" aria-hidden="true">
-  <img src="faviconructic.png" alt="Logo RUCTIC" style="height:80px; width:80px; object-fit:contain;" />
-</div>
+          <img src="faviconructic.png" alt="Logo RUCTIC" style="height:80px; width:80px; object-fit:contain;" />
+        </div>
 
         <div class="brand-text">
           <strong>RUCTIC - Conciencia Digital</strong><br>
@@ -28,7 +95,6 @@
         <a href="#como-funciona">Cómo funciona</a>
         <a class="btn logo-green" href="register.html" id="btn-registrate">Regístrate</a>
 
-
         <a class="nav-btn outline" href="login.html" id="nav-login">Iniciar sesión</a>
       </nav>
     </header>
@@ -38,18 +104,17 @@
         <div class="hero-left">
           <h1 id="hero-title">Convierte la concienciaciación digital en datos reales</h1>
           <p class="lead">Jóvenes líderes enseñando ciudadanía digital y ciberseguridad a todas las generaciones. Plataforma gamificada, servicio social y formación con impacto comunitario.</p>
-                    <div class="cta" role="group" aria-label="Acciones principales">
+          <div class="cta" role="group" aria-label="Acciones principales">
             <a class="btn logo-green" href="register.html" id="btn-registrate">Regístrate</a>
-                        <a class="btn secondary" href="login.html" id="btn-iniciar-sesion">Iniciar sesión</a>
+            <a class="btn secondary" href="login.html" id="btn-iniciar-sesion">Iniciar sesión</a>
           </div>
 
           <p class="muted small" style="margin-top:14px">
             Roles disponibles: <strong>Estudiante líder</strong>, <strong>Supervisor</strong>, <strong>Evaluado</strong>.
           </p>
           <p class="muted small">
-  Aprendizaje gamificado, recompensas por avance y certificación oficial de servicio social.
-</p>
-
+            Aprendizaje gamificado, recompensas por avance y certificación oficial de servicio social.
+          </p>
         </div>
 
         <aside class="hero-right" aria-label="Seleccionar rol">
@@ -91,26 +156,25 @@
       </section>
 
       <section id="como-funciona" style="margin-top:12px">
-  <h2>¿Cómo funciona?</h2>
-  <div class="features">
-    <div class="card">
-      <h3>Formularios & Evaluaciones</h3>
-      <p class="muted">Crea encuestas dinámicas: preguntas abiertas, opción múltiple, escala Likert. Almacenamiento de respuestas y análisis por estudiante y campaña.</p>
-      <img src="https://img.icons8.com/color/96/000000/survey.png" alt="Formulario y Evaluaciones" style="width:80px;display:block;margin:16px auto;">
-    </div>
-    <div class="card">
-      <h3>Monitoreo & Supervisión</h3>
-      <p class="muted">Panel para supervisores: ver actividades, aprobar intervenciones y descargar reportes.<br><br></p>
-      <img src="https://img.icons8.com/color/96/000000/report-card.png" alt="Monitoreo y Supervisión" style="width:80px;display:block;margin:16px auto;">
-    </div>
-    <div class="card">
-      <h3>Notificaciones & Alcance</h3>
-      <p class="muted">Notificaciones por correo y web push; métricas de alcance (número de personas impactadas, tasa de respuesta, tasa de comprensión).</p>
-      <img src="https://img.icons8.com/color/96/000000/appointment-reminders--v2.png" alt="Notificaciones y Alcance" style="width:80px;display:block;margin:16px auto;">
-    </div>
-  </div>
-</section>
-
+        <h2>¿Cómo funciona?</h2>
+        <div class="features">
+          <div class="card">
+            <h3>Formularios & Evaluaciones</h3>
+            <p class="muted">Crea encuestas dinámicas: preguntas abiertas, opción múltiple, escala Likert. Almacenamiento de respuestas y análisis por estudiante y campaña.</p>
+            <img src="https://img.icons8.com/color/96/000000/survey.png" alt="Formulario y Evaluaciones" style="width:80px;display:block;margin:16px auto;">
+          </div>
+          <div class="card">
+            <h3>Monitoreo & Supervisión</h3>
+            <p class="muted">Panel para supervisores: ver actividades, aprobar intervenciones y descargar reportes.<br><br></p>
+            <img src="https://img.icons8.com/color/96/000000/report-card.png" alt="Monitoreo y Supervisión" style="width:80px;display:block;margin:16px auto;">
+          </div>
+          <div class="card">
+            <h3>Notificaciones & Alcance</h3>
+            <p class="muted">Notificaciones por correo y web push; métricas de alcance (número de personas impactadas, tasa de respuesta, tasa de comprensión).</p>
+            <img src="https://img.icons8.com/color/96/000000/appointment-reminders--v2.png" alt="Notificaciones y Alcance" style="width:80px;display:block;margin:16px auto;">
+          </div>
+        </div>
+      </section>
 
       <section aria-labelledby="metricas" style="margin-top:12px">
         <h2 id="metricas">Métricas rápidas (demo)</h2>
@@ -144,8 +208,28 @@
     </footer>
   </div>
 
+  <!-- MODAL DE VIDEO (se muestra al cargar la página) -->
+  <div id="videoModal" class="video-modal" role="dialog" aria-modal="true" aria-label="Video de introducción" hidden>
+    <div class="video-modal-backdrop" data-close="true"></div>
+
+    <div class="video-modal-panel" role="document">
+      <button class="video-modal-close" aria-label="Cerrar video" title="Cerrar (Esc)">✕</button>
+
+      <div class="video-wrapper">
+        <!-- URL de preview de Google Drive (asegúrate que el archivo sea público/compartido) -->
+        <iframe id="videoFrame"
+                src="https://drive.google.com/file/d/1QZSOe0otiUHMDhWiG7ZnT7inCJY2NSQY/preview"
+                allow="autoplay; encrypted-media"
+                allowfullscreen
+                title="Video de RUCTIC"
+                frameborder="0"></iframe>
+      </div>
+    </div>
+  </div>
+  <!-- FIN MODAL DE VIDEO -->
+
   <script>
-    // Accesibilidad: permitir Enter en tarjetas (usa enlaces relativos)
+    // === Accesibilidad: permitir Enter en tarjetas (usa enlaces relativos) ===
     document.querySelectorAll('.role[role="button"]').forEach(card=>{
       card.addEventListener('keydown', (e)=>{
         if(e.key === "Enter"){
@@ -154,6 +238,90 @@
         }
       });
     });
+
+    // === Script del modal de video ===
+    (function(){
+      const modal = document.getElementById('videoModal');
+      if(!modal) return;
+      const closeBtn = modal.querySelector('.video-modal-close');
+      const backdrop = modal.querySelector('.video-modal-backdrop');
+      const panel = modal.querySelector('.video-modal-panel');
+      const iframe = document.getElementById('videoFrame');
+      const mainContainer = document.querySelector('.container') || document.querySelector('main') || document.body;
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalSrc = iframe ? iframe.getAttribute('src') : '';
+
+      // Cambia a true si quieres que el modal solo se muestre la PRIMERA vez por usuario (localStorage).
+      const SHOW_ONCE = false;
+      const STORAGE_KEY = 'ructic_video_shown_v1';
+
+      function openModal(){
+        if(!modal) return;
+        if(mainContainer) mainContainer.setAttribute('aria-hidden', 'true');
+        modal.removeAttribute('hidden');
+        document.body.style.overflow = 'hidden'; // evita scroll de fondo
+        if(closeBtn) closeBtn.focus();
+        document.addEventListener('keydown', onKeyDown);
+      }
+
+      function closeModal(){
+        if(!modal) return;
+        modal.setAttribute('hidden', '');
+        document.body.style.overflow = originalBodyOverflow || '';
+        if(mainContainer) mainContainer.removeAttribute('aria-hidden');
+        // Parar el video (evita que siga en background)
+        if(iframe){
+          iframe.setAttribute('src', 'about:blank');
+          // restaurar src en caso de reabrir después de corto tiempo
+          setTimeout(()=> iframe.setAttribute('src', originalSrc), 300);
+        }
+        document.removeEventListener('keydown', onKeyDown);
+        // restaurar foco a primer elemento focusable
+        const firstFocusable = document.querySelector('a, button, [tabindex]:not([tabindex="-1"])');
+        if(firstFocusable) firstFocusable.focus();
+      }
+
+      function onKeyDown(e){
+        if(e.key === 'Escape'){
+          closeModal();
+        }
+      }
+
+      // Eventos
+      if(closeBtn) {
+        closeBtn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          closeModal();
+        });
+      }
+      if(backdrop) {
+        backdrop.addEventListener('click', (e)=> {
+          closeModal();
+        });
+      }
+      if(panel) {
+        panel.addEventListener('click', (e)=> e.stopPropagation());
+      }
+
+      // Abrir modal al cargar DOM, con opción de mostrar solo 1 vez por usuario
+      document.addEventListener('DOMContentLoaded', ()=>{
+        try {
+          if(SHOW_ONCE){
+            const shown = localStorage.getItem(STORAGE_KEY);
+            if(!shown){
+              openModal();
+              localStorage.setItem(STORAGE_KEY, '1');
+            }
+          } else {
+            openModal();
+          }
+        } catch(err){
+          // si localStorage no está disponible, aun así mostramos
+          openModal();
+        }
+      });
+    })();
   </script>
+
 </body>
 </html>
